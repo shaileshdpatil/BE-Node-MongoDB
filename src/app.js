@@ -1,10 +1,10 @@
 require('dotenv').config()
 const express = require("express");
 const cors = require('cors');
-const { createProxyMiddleware } = require('http-proxy-middleware');
-
+const { check, validationResult } = require("express-validator")
 //auth
-const auth = require("./Auth/Auth");
+const auth = require("./model/auth");
+
 
 const app = express();
 app.use(cors());
@@ -21,7 +21,7 @@ const deal = require("./model/dealSchema");
 
 
 //port address setup
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 
 app.use(express.json());
 
@@ -35,7 +35,7 @@ app.post("/api/user-reg", async (req, res) => {
         userExist = await User.findOne({ email: email });
         if (userExist) {
             return res.status(422).json({ error: "already exist" });
-        }else{
+        } else {
             const user = new User({ name, email, phone, password });
             await user.save();
             res.status(200).json(user);
@@ -47,56 +47,88 @@ app.post("/api/user-reg", async (req, res) => {
 
 
 //register a owner 
-app.post("/api/ownerRegister", async (req, res) => {
-    const { name, email, gender, password, phone } = req.body;
-    if (!name || !email || !password || !phone) {
-        return res.status(422).json({ error: "wrong details" })
+app.post("/api/ownerRegister", [
+    check('name', 'name is required').not().isEmpty(),
+    check('email', 'email is required').isEmail(),
+    check('phone', 'phone is required').isLength({ min: 5 }),
+    check('password', 'password is required').isLength({ min: 5 })
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
     }
+    const { name, email, phone, password,gender } = req.body;
     try {
-        const ownerExist = await Owner.findOne({ email: email })
-        if (ownerExist) {
-            return res.status(422).json({ error: "already exist" })
+        let owner = await Owner.findOne({ email });
+        if (owner) {
+            return res.status(422).json({ error: "email is already exist" })
         }
-        const owner = new Owner({ name, email, password, gender, phone });
-        await owner.save();
-        res.status(200).json(owner);
+        const ownerData = new Owner({
+            name,
+            email,
+            password,
+            phone,
+            gender
+        });
+
+        const salt = await bcrypt.genSalt(10);
+        ownerData.password = await bcrypt.hash(password, salt);
+        await ownerData.save();
+
+        const payload = {
+            ownerData:{
+                id:ownerData.id
+            }
+        }
+
+        jwt.sign(payload,process.env.TOKEN_KEY,{expiresIn:36000},(err,token)=>{
+            if(err) throw err;
+            res.status(200).json({token})
+        })
+
     } catch (err) {
-        console.log(err);
+        console.error(err.message);
+        res.status(500).send("server error");
     }
 });
 
-
-//owner login in website
-app.post("/api/ownerLogin",auth, async (req, res) => {
-    try {
-        let token;  
-        const { email, password } = req.body;
-        if (!email || !password) {
-            return res.status(400).json({ error: "please enter valid details" });
-        }
-        let ownerLogin = await Owner.findOne({ email: email });
-
-        if (ownerLogin) {
-            const checkPassword = await bcrypt.compare(password, ownerLogin.password);
-            token = await ownerLogin.generateAuthToken();
-            res.cookie("tereBaapkaTokan",token,{
-                expires:new Date(Date.now()+ 3600000),
-                httpOnly:true
-            })
-
-            if (!checkPassword) {
-                res.status(400).json({ error: "enter valid email or password" })
-            } else {
-                res.json({ msg: "user login successfully" })
-            }
-            console.log(token);
-        }
-    } catch (err) {
-        console.log(err)
+//login a owner 
+app.post("/api/ownerLogin", [
+    check('email', 'email is required').isEmail(),
+    check('password', 'password is required').isLength({ min: 5 })
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
     }
+    const { email, password} = req.body;
+    try {
+        let owner = await Owner.findOne({ email });
+        if (!owner) {
+            return res.status(422).json({ error: "envalid data" })
+        }
 
-})
+        const checkpass = await bcrypt.compare(password,owner.password);
+        if(!checkpass){
+            return res.status(422).json({ error: "envalid data" })
+        }
 
+        const payload = {
+            owner:{
+                id:owner.id
+            }
+        }
+
+        jwt.sign(payload,process.env.TOKEN_KEY,{expiresIn:36000},(err,token)=>{
+            if(err) throw err;
+            res.status(200).json({token})
+        })
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("server error");
+    }
+});
 
 //display owner details on anywhere 
 app.get("/api/ownerDisplay", async (req, res) => {
@@ -110,18 +142,18 @@ app.get("/api/ownerDisplay", async (req, res) => {
 })
 
 //fedback from which owner 
-app.post("/api/feedback",auth,async(req,res)=>{
-    const {email,comment} = req.body;
-    try{
+app.post("/api/feedback", auth, async (req, res) => {
+    const { email, comment } = req.body;
+    try {
         const feedbacks = new feedback({
             email,
             comment,
-            owner:req.user._id
+            owner: req.user._id
         })
-       const feedbacksave = await feedbacks.save();
+        const feedbacksave = await feedbacks.save();
         res.json(feedbacksave);
-    }catch{
-        res.status(401).json({msg: "error"});
+    } catch {
+        res.status(401).json({ msg: "error" });
     }
 })
 
@@ -137,7 +169,6 @@ app.get("/api/feedbackDisplay", async (req, res) => {
 })
 
 //total deals will display
-//display feedback
 app.get("/api/dealDisplay", async (req, res) => {
     const dealSave = await deal.find();
     try {
@@ -150,10 +181,10 @@ app.get("/api/dealDisplay", async (req, res) => {
 
 //delete owners api
 app.delete("/api/deleteOwner/:id", async function (req, res) {
-    Owner.deleteOne({_id:req.params.id}).then((res)=>{
-        res.status(200)
+    Owner.deleteOne({ _id: req.params.id }).then((res) => {
+        res.status(200).json("successfully deleted")
     }).catch(
-        res.status(400)
+        res.status(400).json("failed")
     )
 })
 

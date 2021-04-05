@@ -9,7 +9,6 @@ const ownerRegisterSchema = new mongoose.Schema({
     },
     email:{
         type:String,
-        pattern:"@gmail\.com$",
         trim:true,
         unique:true,
         lowercase:true,
@@ -22,12 +21,12 @@ const ownerRegisterSchema = new mongoose.Schema({
     },
     gender:{
         type:String,
-        default:"male"
+        enum:['male','female'],
     },
     password:{
         type:String,
         trim:true,
-        minlength:5,
+        minlength:2,
         maxlenght:10
     },
     added_date:{
@@ -48,26 +47,6 @@ const ownerRegisterSchema = new mongoose.Schema({
         }
     ]
 })
-
-
-ownerRegisterSchema.pre('save',async function(next){
-    if(this.isModified('password')){
-        this.password = await bcrypt.hash(this.password, 12);
-        next();
-    }
-});
-
-//tokens
-ownerRegisterSchema.methods.generateAuthToken = async function (){
-    try{
-        let token = jwt.sign({ _id: this._id}, process.env.TOKEN_KEY);
-        this.tokens = this.tokens.concat({token:token});
-        await this.save();
-        return token;
-    }catch(err){
-        console.log(err);
-    }
-}
 
 
 const ownerRegister = new mongoose.model("ownerRegister",ownerRegisterSchema);
