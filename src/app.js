@@ -1,6 +1,7 @@
 require('dotenv').config()
 const express = require("express");
 const cors = require('cors');
+var mongodb = require('mongodb');
 const { check, validationResult } = require("express-validator")
 //auth
 const auth = require("./model/auth");
@@ -18,6 +19,10 @@ const User = require("./model/user_register");
 const Owner = require("./model/ownerRegister");
 const feedback = require("./model/feedbackSchema");
 const deal = require("./model/dealSchema");
+const Allproperty = require("./model/allproperty")
+const package = require("./model/packages");
+const category = require("./model/category");
+const subcategory = require("./model/subcategory");
 
 
 //port address setup
@@ -57,7 +62,7 @@ app.post("/api/ownerRegister", [
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
     }
-    const { name, email, phone, password,gender } = req.body;
+    const { name, email, phone, password, gender } = req.body;
     try {
         let owner = await Owner.findOne({ email });
         if (owner) {
@@ -76,14 +81,14 @@ app.post("/api/ownerRegister", [
         await ownerData.save();
 
         const payload = {
-            ownerData:{
-                id:ownerData.id
+            ownerData: {
+                id: ownerData.id
             }
         }
 
-        jwt.sign(payload,process.env.TOKEN_KEY,{expiresIn:36000},(err,token)=>{
-            if(err) throw err;
-            res.status(200).json({token})
+        jwt.sign(payload, process.env.TOKEN_KEY, { expiresIn: 36000 }, (err, token) => {
+            if (err) throw err;
+            res.status(200).json({ token })
         })
 
     } catch (err) {
@@ -91,6 +96,8 @@ app.post("/api/ownerRegister", [
         res.status(500).send("server error");
     }
 });
+
+//
 
 //login a owner 
 app.post("/api/ownerLogin", [
@@ -101,27 +108,27 @@ app.post("/api/ownerLogin", [
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
     }
-    const { email, password} = req.body;
+    const { email, password } = req.body;
     try {
         let owner = await Owner.findOne({ email });
         if (!owner) {
             return res.status(422).json({ error: "envalid data" })
         }
 
-        const checkpass = await bcrypt.compare(password,owner.password);
-        if(!checkpass){
+        const checkpass = await bcrypt.compare(password, owner.password);
+        if (!checkpass) {
             return res.status(422).json({ error: "envalid data" })
         }
 
         const payload = {
-            owner:{
-                id:owner.id
+            owner: {
+                id: owner.id
             }
         }
 
-        jwt.sign(payload,process.env.TOKEN_KEY,{expiresIn:36000},(err,token)=>{
-            if(err) throw err;
-            res.status(200).json({token})
+        jwt.sign(payload, process.env.TOKEN_KEY, { expiresIn: 36000 }, (err, token) => {
+            if (err) throw err;
+            res.status(200).json({ token })
         })
 
     } catch (err) {
@@ -130,7 +137,95 @@ app.post("/api/ownerLogin", [
     }
 });
 
-//display owner details on anywhere 
+//insert property
+app.post("/api/insertproperty", async (req, res) => {
+    const { name, type, amount } = req.body;
+    try {
+        const property = new Allproperty({
+            name,
+            type,
+            amount
+        });
+        await property.save();
+        res.status(200).send("successfully inserted");
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("server error");
+    }
+});
+//insert property
+app.post("/api/insertcategory", async (req, res) => {
+    const { name} = req.body;
+    try {
+        const categorys = new category({
+            name,
+        });
+        await categorys.save();
+        res.status(200).send("successfully inserted");
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("server error");
+    }
+});
+
+
+//display category
+app.get("/api/categoryDisplay", async (req, res) => {
+    const categorysfind = await category.find();
+    try {
+        if (!categorysfind) throw Error("something wrong")
+        res.status("200").json(categorysfind);
+    } catch {
+        res.status("400").json(categorysfind);
+    }
+})
+
+//all packages manage by admin
+app.post("/api/packageadd", async (req, res) => {
+    const { name, duration,no_of_ads, amount ,description} = req.body;
+    try {
+        const packages = new package({
+            name,
+            duration,
+            no_of_ads,
+            amount,
+            description,
+        });
+        await packages.save();
+        res.status(200).send("successfully inserted");
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("server error");
+    }
+});
+
+//display package
+app.get("/api/packageDisplay", async (req, res) => {
+    const pack = await package.find();
+    try {
+        if (!pack) throw Error("something wrong")
+        res.status("200").json(pack);
+    } catch {
+        res.status("400").json(pack);
+    }
+})
+
+
+//delete package
+app.delete("/api/deletePackage/:id", async function (req, res) {
+    try {
+        const deletepackage = await package.findByIdAndDelete(req.params.id);
+        if (!req.params.id){
+            res.status("400").json(pack);
+        }
+        res.send("successfully deleted");
+    } catch {
+        res.status("400").json(pack);
+    }
+})
+
+
+//display owner details on any  where 
 app.get("/api/ownerDisplay", async (req, res) => {
     const ownerD = await Owner.find();
     try {
@@ -138,6 +233,71 @@ app.get("/api/ownerDisplay", async (req, res) => {
         res.status("200").json(ownerD);
     } catch {
         res.status("400").json(ownerD);
+    }
+})
+
+
+//all propertys display
+app.get("/api/propertyDisplay", async (req, res) => {
+    const property = await Allproperty.find();
+    try {
+        if (!property) throw Error("something wrong")
+        res.status("200").json(property);
+    } catch {
+        res.status("400").json(property);
+    }
+})
+//all subcategory display
+app.get("/api/subcategorydisp", async (req, res) => {
+    const subcat = await subcategory.find();
+    try {
+        if (!subcat) throw Error("something wrong")
+        res.status("200").json(subcat);
+    } catch {
+        res.status("400").json(subcat);
+    }
+})
+
+
+//insert subcategory
+app.post("/api/subcategoryadd", async (req, res) => {
+    const { names,category} = req.body;
+    try {
+        const subcategoryadd = new subcategory({
+            names,category
+        });
+        await subcategoryadd.save();
+        res.status(200).send("successfully inserted");
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("server error");
+    }
+});
+
+//insert subcategory
+app.post("/api/categoryadd", async (req, res) => {
+    const { name} = req.body;
+    try {
+        const categoryadd = new category({
+            name,
+        });
+        await categoryadd.save();
+        res.status(200).send("successfully inserted");
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("server error");
+    }
+});
+//delete category api
+app.delete("/api/deletcategory/:id", async function (req, res) {
+    try {
+        const deletecategory = await category.findByIdAndDelete(req.params.id);
+        if (!req.params.id){
+            res.status("400").json(deletecategory);
+        }
+        res.send(deletecategory);
+    } catch {
+        res.status("400").json(deletecategory);
     }
 })
 
@@ -181,11 +341,15 @@ app.get("/api/dealDisplay", async (req, res) => {
 
 //delete owners api
 app.delete("/api/deleteOwner/:id", async function (req, res) {
-    Owner.deleteOne({ _id: req.params.id }).then((res) => {
-        res.status(200).json("successfully deleted")
-    }).catch(
-        res.status(400).json("failed")
-    )
+    try {
+        const deletepackage = await Owner.findByIdAndDelete(req.params.id);
+        if (!req.params.id){
+            res.status("400").json(deletepackage);
+        }
+        res.send("successfully deleted");
+    } catch {
+        res.status("400").json(deletepackage);
+    }
 })
 
 app.listen(port, () => {

@@ -1,9 +1,8 @@
 const mongoose = require("mongoose");
 
 const FeedbackSchema = new mongoose.Schema({
-    owner:{
-        type : mongoose.Schema.Types.ObjectId,
-        ref :"ownerRegister",
+    subject:{
+        type : String
     },
     email:{
         type:String,
