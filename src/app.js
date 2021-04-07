@@ -1,8 +1,9 @@
 require('dotenv').config()
 const express = require("express");
 const cors = require('cors');
-var mongodb = require('mongodb');
 const { check, validationResult } = require("express-validator")
+
+
 //auth
 const auth = require("./model/auth");
 
@@ -11,6 +12,7 @@ const app = express();
 app.use(cors());
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+
 //connextion
 require("../db");
 
@@ -26,7 +28,7 @@ const subcategory = require("./model/subcategory");
 
 
 //port address setup
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
@@ -97,7 +99,16 @@ app.post("/api/ownerRegister", [
     }
 });
 
-//
+app.get("/api/categoryDisplay", async (req, res) => {
+    const categorysfind = await category.find();
+    try {
+        if (!categorysfind) throw Error("something wrong")
+        res.status("200").json(categorysfind);
+    } catch {
+        res.status("400").json(categorysfind);
+    }
+})
+
 
 //login a owner 
 app.post("/api/ownerLogin", [
@@ -153,6 +164,7 @@ app.post("/api/insertproperty", async (req, res) => {
         res.status(500).send("server error");
     }
 });
+
 //insert property
 app.post("/api/insertcategory", async (req, res) => {
     const { name} = req.body;
@@ -169,16 +181,7 @@ app.post("/api/insertcategory", async (req, res) => {
 });
 
 
-//display category
-app.get("/api/categoryDisplay", async (req, res) => {
-    const categorysfind = await category.find();
-    try {
-        if (!categorysfind) throw Error("something wrong")
-        res.status("200").json(categorysfind);
-    } catch {
-        res.status("400").json(categorysfind);
-    }
-})
+
 
 //all packages manage by admin
 app.post("/api/packageadd", async (req, res) => {
@@ -212,15 +215,15 @@ app.get("/api/packageDisplay", async (req, res) => {
 
 
 //delete package
-app.delete("/api/deletePackage/:id", async function (req, res) {
+app.delete("/api/deletePackage/:_id", async function (req, res) {
     try {
-        const deletepackage = await package.findByIdAndDelete(req.params.id);
-        if (!req.params.id){
-            res.status("400").json(pack);
+        const deletepackage = await package.findByIdAndDelete(req.params._id);
+        if (!req.params._id){
+            res.status("400").json(deletepackage);
         }
         res.send("successfully deleted");
     } catch {
-        res.status("400").json(pack);
+        res.status("400").json(deletepackage);
     }
 })
 
