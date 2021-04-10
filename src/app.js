@@ -5,8 +5,7 @@ const { check, validationResult } = require("express-validator")
 
 
 //auth
-const auth = require("./model/auth");
-
+const auth = require("./Auth/middleware");
 
 const app = express();
 app.use(cors());
@@ -25,12 +24,79 @@ const Allproperty = require("./model/allproperty")
 const package = require("./model/packages");
 const category = require("./model/category");
 const subcategory = require("./model/subcategory");
-
+const city = require("./model/city");
+const state = require("./model/state");
+const admin = require("./model/adminData");
 
 //port address setup
 const port = process.env.PORT || 3000;
 
 app.use(express.json());
+
+//fedback from which owner 
+app.post("/api/feedbackssadd", async (req, res) => {
+    const { name, email,message } = req.body;
+    try {
+        const feedbackadd = new feedback({
+            name, email,message
+        });
+        await feedbackadd.save();
+        res.status(200).send("successfully inserted");
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send("server error");
+    }
+});
+
+//login a owner 
+app.post("/api/AdminLogin", [
+    check('email', 'email is required').isEmail(),
+    check('password', 'password is required').isLength({ min: 5 })
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+    const { email, password } = req.body;
+    try {
+        let adminLogin = await admin.find({ email,password });
+        if (!adminLogin) {
+            return res.status(422).json({ error: "envalid data" })
+        }
+
+        const payload = {
+            adminLogin: {
+                id: adminLogin.id
+            }
+        }
+
+        jwt.sign(payload, process.env.TOKEN_KEY, { expiresIn: 36000 }, (err, token) => {
+            if (err) throw err;
+            res.status(200).json({ token })
+        })
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("server error");
+    }
+});
+
+
+//insert admin
+// app.post("/api/adminadd", async (req, res) => {
+//     const { email,password } = req.body;
+//     try {
+//         const adminadd = new admin({
+//             email,
+//             password
+//         });
+//         await adminadd.save();
+//         res.status(200).send("successfully inserted");
+//     } catch (err) {
+//         console.error(err.message);
+//         res.status(500).send("server error");
+//     }
+// });
 
 //register a user
 app.post("/api/user-reg", async (req, res) => {
@@ -54,28 +120,18 @@ app.post("/api/user-reg", async (req, res) => {
 
 
 //register a owner 
-app.post("/api/ownerRegister", [
-    check('name', 'name is required').not().isEmpty(),
-    check('email', 'email is required').isEmail(),
-    check('phone', 'phone is required').isLength({ min: 5 }),
-    check('password', 'password is required').isLength({ min: 5 })
-], async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
-    const { name, email, phone, password, gender } = req.body;
+app.post("/api/ownerRegister", async (req, res) => {
+    const { names, email, phone, password, gender } = req.body;
     try {
         let owner = await Owner.findOne({ email });
         if (owner) {
             return res.status(422).json({ error: "email is already exist" })
         }
         const ownerData = new Owner({
-            name,
+            names,
             email,
             password,
             phone,
-            gender
         });
 
         const salt = await bcrypt.genSalt(10);
@@ -87,10 +143,15 @@ app.post("/api/ownerRegister", [
                 id: ownerData.id
             }
         }
+        const user = {
+            ownerDate:{
+                names: ownerData.names
+            }
+        }
 
         jwt.sign(payload, process.env.TOKEN_KEY, { expiresIn: 36000 }, (err, token) => {
             if (err) throw err;
-            res.status(200).json({ token })
+            res.status(200).json({ user })
         })
 
     } catch (err) {
@@ -99,6 +160,7 @@ app.post("/api/ownerRegister", [
     }
 });
 
+//display
 app.get("/api/categoryDisplay", async (req, res) => {
     const categorysfind = await category.find();
     try {
@@ -109,10 +171,22 @@ app.get("/api/categoryDisplay", async (req, res) => {
     }
 })
 
+//delete category
+app.delete("/api/deleteOcategory/:id", async function (req, res) {
+    try {
+        const deletecategory = await category.findByIdAndDelete(req.params.id);
+        if (!req.params.id) {
+            res.status("400").json(deletecategory);
+        }
+        res.send("successfully deleted");
+    } catch {
+        res.status("400").json(deletecategory);
+    }
+})
 
 //login a owner 
 app.post("/api/ownerLogin", [
-    check('email', 'email is required').isEmail(),
+    check('email', 'email is required').not().isEmpty(),
     check('password', 'password is required').isLength({ min: 5 })
 ], async (req, res) => {
     const errors = validationResult(req);
@@ -137,9 +211,14 @@ app.post("/api/ownerLogin", [
             }
         }
 
+        const user = {
+            status: owner.status,
+            email: owner.email
+        }
+
         jwt.sign(payload, process.env.TOKEN_KEY, { expiresIn: 36000 }, (err, token) => {
             if (err) throw err;
-            res.status(200).json({ token })
+            res.status(200).json({ user })
         })
 
     } catch (err) {
@@ -167,7 +246,7 @@ app.post("/api/insertproperty", async (req, res) => {
 
 //insert property
 app.post("/api/insertcategory", async (req, res) => {
-    const { name} = req.body;
+    const { name } = req.body;
     try {
         const categorys = new category({
             name,
@@ -181,12 +260,100 @@ app.post("/api/insertcategory", async (req, res) => {
 });
 
 
+//insert state
+app.post("/api/stateadd",auth, [
+    check('country', 'country is required').isLength({ min: 3, max: 15 }),
+    check('states', 'state is required').isLength({ min: 3, max: 15 })
+], async (req, res) => {
+    const { country, states } = req.body;
+    try {
+        const stateadds = new state({
+            country, states
+        });
+        await stateadds.save();
+        res.status("200").send("successfully inserted");
+    } catch (err) {
+        console.error(err.message);
+        res.status("400").send("server error");
+    }
+});
+
+//all state display
+app.get("/api/statedisp", async (req, res) => {
+    const statecat = await state.find();
+    try {
+        if (!statecat) throw Error("something wrong")
+        res.status("200").json(statecat);
+    } catch {
+        res.status("400").json(statecat);
+    }
+})
+
+//dellete state
+app.delete("/api/deletestate/:id", async function (req, res) {
+    try {
+        const deletestate = await state.findByIdAndDelete(req.params.id);
+        if (!req.params.id) {
+            res.status("400").json(deletestate);
+        }
+        res.send(deletestate);
+    } catch {
+        res.status("400").json(deletestate);
+    }
+})
+
+//insert city
+app.post("/api/cityadd", [
+    check('citys').isLength({ min: 3 }),
+    check('states').isLength({ min: 3 })
+], async (req, res) => {
+    const { states, citys } = req.body;
+    try {
+        const cityadd = new city({
+            states, citys
+        });
+        await cityadd.save();
+        res.status("200").send("successfully inserted");
+    } catch (err) {
+        console.error(err.message);
+        res.status("500").send("server error");
+    }
+});
+
+//delete city
+app.delete("/api/deletecityy/:id", async function (req, res) {
+    try {
+        const deletecitys = await city.findByIdAndDelete(req.params.id);
+        if (!req.params.id) {
+            res.status("400").json(deletecitys);
+        }
+        res.send(deletecitys);
+    } catch {
+        res.status("400").json(deletecitys);
+    }
+})
+
+//all city display
+app.get("/api/citydisp", async (req, res) => {
+    const citycat = await city.find();
+    try {
+        if (!citycat) throw Error("something wrong")
+        res.status("200").json(citycat);
+    } catch {
+        res.status("400").json(citycat);
+    }
+})
 
 
 //all packages manage by admin
 app.post("/api/packageadd", async (req, res) => {
-    const { name, duration,no_of_ads, amount ,description} = req.body;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+    const { name, duration, no_of_ads, amount, description } = req.body;
     try {
+
         const packages = new package({
             name,
             duration,
@@ -218,7 +385,7 @@ app.get("/api/packageDisplay", async (req, res) => {
 app.delete("/api/deletePackage/:_id", async function (req, res) {
     try {
         const deletepackage = await package.findByIdAndDelete(req.params._id);
-        if (!req.params._id){
+        if (!req.params._id) {
             res.status("400").json(deletepackage);
         }
         res.send("successfully deleted");
@@ -226,6 +393,7 @@ app.delete("/api/deletePackage/:_id", async function (req, res) {
         res.status("400").json(deletepackage);
     }
 })
+
 
 
 //display owner details on any  where 
@@ -250,6 +418,8 @@ app.get("/api/propertyDisplay", async (req, res) => {
         res.status("400").json(property);
     }
 })
+
+
 //all subcategory display
 app.get("/api/subcategorydisp", async (req, res) => {
     const subcat = await subcategory.find();
@@ -264,10 +434,15 @@ app.get("/api/subcategorydisp", async (req, res) => {
 
 //insert subcategory
 app.post("/api/subcategoryadd", async (req, res) => {
-    const { names,category} = req.body;
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+    const { names, category } = req.body;
     try {
         const subcategoryadd = new subcategory({
-            names,category
+            names, category
         });
         await subcategoryadd.save();
         res.status(200).send("successfully inserted");
@@ -277,9 +452,29 @@ app.post("/api/subcategoryadd", async (req, res) => {
     }
 });
 
+//delete subcategory
+app.delete("/api/deletesubcategory/:id", async function (req, res) {
+    try {
+        const deletesubcategory = await subcategory.findByIdAndDelete(req.params.id);
+        if (!req.params.id) {
+            res.status("400").json(deletesubcategory);
+        }
+        res.send(deletesubcategory);
+    } catch {
+        res.status("400").json(deletesubcategory);
+    }
+})
+
+
 //insert subcategory
-app.post("/api/categoryadd", async (req, res) => {
-    const { name} = req.body;
+app.post("/api/categoryadd",auth, [
+    check('name', 'is required').not().isLength({ min: 2, max: 50 })
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+    const { name } = req.body;
     try {
         const categoryadd = new category({
             name,
@@ -291,11 +486,15 @@ app.post("/api/categoryadd", async (req, res) => {
         res.status(500).send("server error");
     }
 });
+
+
+
+
 //delete category api
 app.delete("/api/deletcategory/:id", async function (req, res) {
     try {
         const deletecategory = await category.findByIdAndDelete(req.params.id);
-        if (!req.params.id){
+        if (!req.params.id) {
             res.status("400").json(deletecategory);
         }
         res.send(deletecategory);
@@ -304,21 +503,41 @@ app.delete("/api/deletcategory/:id", async function (req, res) {
     }
 })
 
-//fedback from which owner 
-app.post("/api/feedback", auth, async (req, res) => {
-    const { email, comment } = req.body;
+//owner activate
+app.put("/api/updateOwner/:id/status", async function (req, res) {
     try {
-        const feedbacks = new feedback({
-            email,
-            comment,
-            owner: req.user._id
+        const id = req.params.id
+        Owner.findByIdAndUpdate({ _id: id }, { status: true })
+        .exec((err, result) => {
+            if (err) return console.log(err)
+            res.json("successfully activated")
+        }) 
+    } catch (err) {
+        console.log(err)
+        res.json({
+            err: 'Invalid owner'
         })
-        const feedbacksave = await feedbacks.save();
-        res.json(feedbacksave);
-    } catch {
-        res.status(401).json({ msg: "error" });
     }
 })
+
+//owner activate
+app.put("/api/deactivateOwner/:id/status", async function (req, res) {
+    try {
+        const id = req.params.id
+        Owner.findByIdAndUpdate({ _id: id }, { status: false })
+        .exec((err, result) => {
+            if (err) return console.log(err)
+            res.json("successfully deactivated")
+        }) 
+    } catch (err) {
+        console.log(err)
+        res.json({
+            err: 'Invalid owner'
+        })
+    }
+})
+
+
 
 //display feedback
 app.get("/api/feedbackDisplay", async (req, res) => {
@@ -346,7 +565,7 @@ app.get("/api/dealDisplay", async (req, res) => {
 app.delete("/api/deleteOwner/:id", async function (req, res) {
     try {
         const deletepackage = await Owner.findByIdAndDelete(req.params.id);
-        if (!req.params.id){
+        if (!req.params.id) {
             res.status("400").json(deletepackage);
         }
         res.send("successfully deleted");
