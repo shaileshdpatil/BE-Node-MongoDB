@@ -1,14 +1,18 @@
 const mongoose = require("mongoose");
 
-const subcategorySchema = new mongoose.Schema({
-    names:{
+const citySchema = new mongoose.Schema({
+    citys:{
         type:String,
-        minLength:2,
+        minLenght:3,
+        maxLenght:15,
+        required:true,
         unique:true,
     },
-    category:{
+    states:{
         type:String,
-        minLenghth:2,
+        minLenght:3,
+        maxLenght:15,
+        required:true,
         unique:true,
     },
     added_date:{
@@ -23,5 +27,5 @@ const subcategorySchema = new mongoose.Schema({
 })
 
 
-const subcategory = new mongoose.model("subcategorys",subcategorySchema);
-module.exports = subcategory;
+const city = new mongoose.model("citys",citySchema);
+module.exports = city;

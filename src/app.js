@@ -244,20 +244,7 @@ app.post("/api/insertproperty", async (req, res) => {
     }
 });
 
-//insert property
-app.post("/api/insertcategory", async (req, res) => {
-    const { name } = req.body;
-    try {
-        const categorys = new category({
-            name,
-        });
-        await categorys.save();
-        res.status(200).send("successfully inserted");
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send("server error");
-    }
-});
+
 
 
 //insert state
@@ -344,6 +331,33 @@ app.get("/api/citydisp", async (req, res) => {
     }
 })
 
+//insert property
+app.post("/api/insertcategory", async (req, res) => {
+    const { name } = req.body;
+    try {
+        const categorys = new category({
+            name,
+        });
+        await categorys.save();
+        const body = {
+            success: true,
+            message: 'successfully inserted',
+            error: ''
+        }
+        res.status(200).send(body);
+    } catch (err) {
+        console.error(err.code);
+        if (err.code == 11000) {
+            const body = {
+                success: false,
+                error: `Duplicate data ${err.keyValue.name}`
+            }
+            res.status(400).send(body)
+        } else {
+            res.status(500).send("server error");
+        }
+    }
+});
 
 //all packages manage by admin
 app.post("/api/packageadd", async (req, res) => {
@@ -353,7 +367,6 @@ app.post("/api/packageadd", async (req, res) => {
     }
     const { name, duration, no_of_ads, amount, description } = req.body;
     try {
-
         const packages = new package({
             name,
             duration,
@@ -362,10 +375,23 @@ app.post("/api/packageadd", async (req, res) => {
             description,
         });
         await packages.save();
-        res.status(200).send("successfully inserted");
+        const body = {
+            success: true,
+            message: 'successfully inserted',
+            error: ''
+        }
+        res.status(200).send(body);
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send("server error");
+        console.error(err.code);
+        if (err.code == 11000) {
+            const body = {
+                success: false,
+                error: `Duplicate data ${err.keyValue.name}`
+            }
+            res.status(400).send(body)
+        } else {
+            res.status(500).send("server error");
+        }
     }
 });
 
@@ -516,6 +542,29 @@ app.put("/api/updateOwner/:id/status", async function (req, res) {
         console.log(err)
         res.json({
             err: 'Invalid owner'
+        })
+    }
+})
+
+//update package 
+app.put("/api/updatePackage/:id/details", async function (req, res) {
+    try {
+        const id = req.params.id
+        const name = req.body.name
+        const duration = req.body.duration
+        const no_of_ads = req.body.no_of_ads
+        const amount = req.body.amount
+        const description = req.body.description
+
+        package.findByIdAndUpdate({ _id: id }, { name ,duration,no_of_ads,amount,description})
+        .exec((err, result) => {
+            if (err) return console.log(err)
+            res.json("successfully updated")
+        }) 
+    } catch (err) {
+        console.log(err)
+        res.json({
+            err: 'failed to update'
         })
     }
 })

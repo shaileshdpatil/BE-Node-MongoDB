@@ -3,11 +3,13 @@ const mongoose = require("mongoose");
 const dealSchema = new mongoose.Schema({
     OwnerName:{
         type:String,
-        required:true
+        required:true,
+        unique:true,
     },
     customerName:{
         type:String,
-        required:true
+        required:true,
+        unique:true,
     },
     amount:{
         type:Number,

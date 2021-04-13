@@ -1,27 +1,22 @@
 const mongoose = require("mongoose");
 
 const FeedbackSchema = new mongoose.Schema({
-    subject:{
+    name:{
         type : String
     },
     email:{
         type:String,
-        pattern:'@gmail\.com$',
-        trim:true,
-        lowercase:true,
     },
-    comment:{
+    message:{
         type:String,
-        maxlenght:59,
     },
     added_date:{
         type:Date,
         default:Date.now(),
     },
-    statue:{
-        type:String,
-        enum:['Active','notActive'],
-        default:"Active"
+    status:{
+        type:Boolean,
+        default:false
     }
 })
 

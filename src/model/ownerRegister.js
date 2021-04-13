@@ -3,7 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const ownerRegisterSchema = new mongoose.Schema({
-    name:{
+    names:{
         type:String,
         required:true
     },
@@ -16,7 +16,6 @@ const ownerRegisterSchema = new mongoose.Schema({
     },
     phone:{
         type:Number,
-        match: /^(\()?\d{3}(\))?(-|\s)?\d{3}(-|\s)\d{4}$/,
         unique:true
     },
     gender:{
@@ -34,9 +33,8 @@ const ownerRegisterSchema = new mongoose.Schema({
         default:Date.now
     },
     status:{
-        type:String,
-        enum:['active','notActive'],
-        default:"active"
+        type:Boolean,
+        default:false
     },
     tokens:[
         {

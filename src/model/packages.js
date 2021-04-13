@@ -3,19 +3,23 @@ const mongoose = require("mongoose");
 const packageSchema = new mongoose.Schema({
     name:{
         type:String,
-        required:true
+        required:true,
     },
     duration:{
         type:Number,
+        required:true,
     },
     no_of_ads:{
         type:Number,
+        required:true,
     },
     amount:{
         type:Number,
+        required:true,
     },
     description:{
         type:String,
+        required:true
     },
     added_date:{
         type:Date,
