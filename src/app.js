@@ -290,10 +290,7 @@ app.delete("/api/deletestate/:id", async function (req, res) {
 })
 
 //insert city
-app.post("/api/cityadd", [
-    check('citys').isLength({ min: 3 }),
-    check('states').isLength({ min: 3 })
-], async (req, res) => {
+app.post("/api/cityadd", async (req, res) => {
     const { states, citys } = req.body;
     try {
         const cityadd = new city({
@@ -338,7 +335,7 @@ app.post("/api/insertcategory", async (req, res) => {
         const categorys = new category({
             name,
         });
-        await categorys.save();
+        await categorys.save(); 
         const body = {
             success: true,
             message: 'successfully inserted',
@@ -460,15 +457,10 @@ app.get("/api/subcategorydisp", async (req, res) => {
 
 //insert subcategory
 app.post("/api/subcategoryadd", async (req, res) => {
-
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
-    const { names, category } = req.body;
+    const { names,category } = req.body;
     try {
         const subcategoryadd = new subcategory({
-            names, category
+            names,category
         });
         await subcategoryadd.save();
         res.status(200).send("successfully inserted");
@@ -476,7 +468,7 @@ app.post("/api/subcategoryadd", async (req, res) => {
         console.error(err.message);
         res.status(500).send("server error");
     }
-});
+})
 
 //delete subcategory
 app.delete("/api/deletesubcategory/:id", async function (req, res) {
@@ -493,13 +485,7 @@ app.delete("/api/deletesubcategory/:id", async function (req, res) {
 
 
 //insert subcategory
-app.post("/api/categoryadd",auth, [
-    check('name', 'is required').not().isLength({ min: 2, max: 50 })
-], async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
+app.post("/api/categoryadd", async (req, res) => {
     const { name } = req.body;
     try {
         const categoryadd = new category({
@@ -568,6 +554,86 @@ app.put("/api/updatePackage/:id/details", async function (req, res) {
         })
     }
 })
+
+//update package 
+app.put("/api/updateCategory/:id/details", async function (req, res) {
+    try {
+        const id = req.params.id
+        const name = req.body.name
+
+        category.findByIdAndUpdate({ _id: id }, { name})
+        .exec((err, result) => {
+            if (err) return console.log(err)
+            res.json("successfully updated")
+        }) 
+    } catch (err) {
+        console.log(err)
+        res.json({
+            err: 'failed to update'
+        })
+    }
+})
+
+//update subcategory
+app.put("/api/updateSubCategory/:id/details", async function (req, res) {
+    try {
+        const id = req.params.id
+        const names = req.body.names
+        const category = req.body.category
+
+        subcategory.findByIdAndUpdate({ _id: id }, { names,category})
+        .exec((err, result) => {
+            if (err) return console.log(err)
+            res.json("successfully updated")
+        }) 
+    } catch (err) {
+        console.log(err)
+        res.json({
+            err: 'failed to update'
+        })
+    }
+})
+
+//update state
+app.put("/api/updateState/:id/details", async function (req, res) {
+    try {
+        const id = req.params.id
+        const states = req.body.states
+        const country = req.body.country
+
+        state.findByIdAndUpdate({ _id: id }, { states,country})
+        .exec((err, result) => {
+            if (err) return console.log(err)
+            res.json("successfully updated")
+        }) 
+    } catch (err) {
+        console.log(err)
+        res.json({
+            err: 'failed to update'
+        })
+    }
+})
+
+//update city
+app.put("/api/updateCity/:id/details", async function (req, res) {
+    try {
+        const id = req.params.id
+        const citys = req.body.citys
+        const states = req.body.states
+
+        city.findByIdAndUpdate({ _id: id }, { states,citys})
+        .exec((err, result) => {
+            if (err) return console.log(err)
+            res.json("successfully updated")
+        }) 
+    } catch (err) {
+        console.log(err)
+        res.json({
+            err: 'failed to update'
+        })
+    }
+})
+
 
 //owner activate
 app.put("/api/deactivateOwner/:id/status", async function (req, res) {
