@@ -4,14 +4,10 @@ const stateSchema = new mongoose.Schema({
     country:{
         type:String,
         required:true,
-        minLenght:3,
-        maxLenght:15
     },
     states:{
         type:String,
         required:true,
-        minLenght:3,
-        maxLenght:15
     },
     added_date:{
         type:Date,

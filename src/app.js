@@ -33,6 +33,28 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
+//register a admin 
+app.post("/api/adminRegister", async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        let adminss = await admin.findOne({ email });
+        if (adminss) {
+            return res.status(422).json({ error: "email is already exist" })
+        }
+        const adminData = new admin({
+            email,
+            password,
+        });
+
+        const salt = await bcrypt.genSalt(10);
+        adminData.password = await bcrypt.hash(password, salt);
+        await adminData.save();
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("server error");
+    }
+});
 //fedback from which owner 
 app.post("/api/feedbackssadd", async (req, res) => {
     const { name, email,message } = req.body;
@@ -49,32 +71,26 @@ app.post("/api/feedbackssadd", async (req, res) => {
 });
 
 //login a owner 
-app.post("/api/AdminLogin", [
-    check('email', 'email is required').isEmail(),
-    check('password', 'password is required').isLength({ min: 5 })
-], async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
+app.post("/api/AdminLogin", async (req, res) => {
     const { email, password } = req.body;
     try {
-        let adminLogin = await admin.find({ email,password });
-        if (!adminLogin) {
-            return res.status(422).json({ error: "envalid data" })
-        }
-
-        const payload = {
-            adminLogin: {
-                id: adminLogin.id
+        const adminLog = await admin.findOne({ email });
+            if (!adminLog) {
+                return res.status(422).json({ error: "envalid data" })
+            }   
+            const checkpassw = await bcrypt.compare(password, adminLog.password);
+            if (!checkpassw) {
+                return res.status(422).json({ error: "envalid data pass" })
             }
-        }
-
-        jwt.sign(payload, process.env.TOKEN_KEY, { expiresIn: 36000 }, (err, token) => {
-            if (err) throw err;
-            res.status(200).json({ token })
-        })
-
+            const payload = {
+                adminLog: {
+                    id: adminLog.id
+                }
+            }
+            jwt.sign(payload, process.env.TOKEN_KEY, { expiresIn: 36000 }, (err, token) => {
+                if (err) throw err;
+                res.status(200).json({ token })
+            })
     } catch (err) {
         console.error(err.message);
         res.status(500).send("server error");
@@ -82,21 +98,6 @@ app.post("/api/AdminLogin", [
 });
 
 
-//insert admin
-// app.post("/api/adminadd", async (req, res) => {
-//     const { email,password } = req.body;
-//     try {
-//         const adminadd = new admin({
-//             email,
-//             password
-//         });
-//         await adminadd.save();
-//         res.status(200).send("successfully inserted");
-//     } catch (err) {
-//         console.error(err.message);
-//         res.status(500).send("server error");
-//     }
-// });
 
 //register a user
 app.post("/api/user-reg", async (req, res) => {
@@ -247,24 +248,6 @@ app.post("/api/insertproperty", async (req, res) => {
 
 
 
-//insert state
-app.post("/api/stateadd",auth, [
-    check('country', 'country is required').isLength({ min: 3, max: 15 }),
-    check('states', 'state is required').isLength({ min: 3, max: 15 })
-], async (req, res) => {
-    const { country, states } = req.body;
-    try {
-        const stateadds = new state({
-            country, states
-        });
-        await stateadds.save();
-        res.status("200").send("successfully inserted");
-    } catch (err) {
-        console.error(err.message);
-        res.status("400").send("server error");
-    }
-});
-
 //all state display
 app.get("/api/statedisp", async (req, res) => {
     const statecat = await state.find();
@@ -356,7 +339,22 @@ app.post("/api/insertcategory", async (req, res) => {
     }
 });
 
-//all packages manage by admin
+//insert state
+app.post("/api/stateadd",  async (req, res) => {
+    const { country, states } = req.body;
+    try {
+        const stateadds = new state({
+            country, states
+        });
+        await stateadds.save();
+        res.status(200).send("successfully inserted");
+    } catch (err) {
+        res.status(500).send("server error");
+    }
+});
+
+
+//all packages manage by admin  
 app.post("/api/packageadd", async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -365,7 +363,7 @@ app.post("/api/packageadd", async (req, res) => {
     const { name, duration, no_of_ads, amount, description } = req.body;
     try {
         const packages = new package({
-            name,
+            name,   
             duration,
             no_of_ads,
             amount,
@@ -391,6 +389,34 @@ app.post("/api/packageadd", async (req, res) => {
         }
     }
 });
+
+//insert subcategory
+app.post("/api/subcategoryadd", async (req, res) => {
+    const { names,category } = req.body;
+    try {
+        const subcategoryadd = new subcategory({
+            names,category
+        });
+        const body = {
+            success: true,
+            message: 'successfully inserted',
+            error: ''
+        }
+        await subcategoryadd.save();
+        res.status(200).send(body);
+    } catch (err) {
+        console.error(err.message);
+        if (err.code == 11000) {
+            const body = {
+                success: false,
+                error: `Duplicate data ${err.keyValue.names}`
+            }
+            res.status(400).send(body)
+        } else {
+            res.status(500).send("server error");
+        }
+    }
+})
 
 //display package
 app.get("/api/packageDisplay", async (req, res) => {
@@ -455,20 +481,8 @@ app.get("/api/subcategorydisp", async (req, res) => {
 })
 
 
-//insert subcategory
-app.post("/api/subcategoryadd", async (req, res) => {
-    const { names,category } = req.body;
-    try {
-        const subcategoryadd = new subcategory({
-            names,category
-        });
-        await subcategoryadd.save();
-        res.status(200).send("successfully inserted");
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send("server error");
-    }
-})
+
+
 
 //delete subcategory
 app.delete("/api/deletesubcategory/:id", async function (req, res) {
@@ -480,6 +494,19 @@ app.delete("/api/deletesubcategory/:id", async function (req, res) {
         res.send(deletesubcategory);
     } catch {
         res.status("400").json(deletesubcategory);
+    }
+})
+
+//delete subcategory
+app.delete("/api/deletefeedback/:id", async function (req, res) {
+    try {
+        const deletefeedback = await feedback.findByIdAndDelete(req.params.id);
+        if (!req.params.id) {
+            res.status("400").json(deletefeedback);
+        }
+        res.send(deletefeedback);
+    } catch {
+        res.status("400").json(deletefeedback);
     }
 })
 
@@ -543,15 +570,23 @@ app.put("/api/updatePackage/:id/details", async function (req, res) {
         const description = req.body.description
 
         package.findByIdAndUpdate({ _id: id }, { name ,duration,no_of_ads,amount,description})
-        .exec((err, result) => {
-            if (err) return console.log(err)
-            res.json("successfully updated")
-        }) 
+        const body = {
+            success: true,
+            message: 'successfully updated',
+            error: ''
+        }
+        res.status(200).send(body);
     } catch (err) {
-        console.log(err)
-        res.json({
-            err: 'failed to update'
-        })
+        console.error(err.code);
+        if (err.code == 11000) {
+            const body = {
+                success: false,
+                error: `Duplicate data ${err.keyValue.name}`
+            }
+            res.status(400).send(body)
+        } else {
+            res.status(500).send("server error");
+        }
     }
 })
 
