@@ -122,7 +122,7 @@ app.post("/api/user-reg", async (req, res) => {
 
 //register a owner 
 app.post("/api/ownerRegister", async (req, res) => {
-    const { names, email, phone, password, gender } = req.body;
+    const { names, email, phone, password,tokens } = req.body;
     try {
         let owner = await Owner.findOne({ email });
         if (owner) {
@@ -144,15 +144,15 @@ app.post("/api/ownerRegister", async (req, res) => {
                 id: ownerData.id
             }
         }
-        const user = {
-            ownerDate:{
-                names: ownerData.names
-            }
-        }
+        // const user = {
+        //     ownerDate:{
+        //         names: ownerData.names
+        //     }
+        // }
 
         jwt.sign(payload, process.env.TOKEN_KEY, { expiresIn: 36000 }, (err, token) => {
             if (err) throw err;
-            res.status(200).json({ user })
+            res.status(200).json({token})
         })
 
     } catch (err) {
@@ -219,7 +219,7 @@ app.post("/api/ownerLogin", [
 
         jwt.sign(payload, process.env.TOKEN_KEY, { expiresIn: 36000 }, (err, token) => {
             if (err) throw err;
-            res.status(200).json({ user })
+            res.status(200).json({ token })
         })
 
     } catch (err) {
