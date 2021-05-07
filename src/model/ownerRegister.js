@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-
 const ownerRegisterSchema = new mongoose.Schema({
+    packageId:{
+        type:String
+    },
     names:{
         type:String,
         required:true

@@ -96,21 +96,55 @@ app.post("/api/AdminLogin", async (req, res) => {
         res.status(500).send("server error");
     }
 });
+//login a user
+app.post("/api/userLogin", async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        let userLogin = await User.findOne({ email });
+        if (!userLogin) {
+            return res.status(422).json({ error: "envalid data" })
+        }
 
+        const checkpass = await bcrypt.compare(password, userLogin.password);
+        if (!checkpass) {
+            return res.status(422).json({ error: "envalid data" })
+        }
+
+        const payload = {
+            userLogin: {
+                id: userLogin.id
+            }
+        }
+        const data ={
+            data:{
+                email:userLogin.email
+            }
+        }
+        jwt.sign(payload, process.env.TOKEN_KEY, { expiresIn: 36000 }, (err, token) => {
+            if (err) throw err;
+            res.status(200).json({ data })
+        })
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("server error");
+    }
+});
 
 
 //register a user
 app.post("/api/user-reg", async (req, res) => {
-    const { name, email, phone, password } = req.body;
-    if (!name || !email || !phone || !password) {
-        return res.status(422).json({ error: "Please enter all fields" })
-    }
+    const { Fname,Lname, email, phone, password } = req.body;
     try {
-        userExist = await User.findOne({ email: email });
+        userExist = await User.findOne({email});
         if (userExist) {
             return res.status(422).json({ error: "already exist" });
         } else {
-            const user = new User({ name, email, phone, password });
+            const user = new User({ Fname,Lname, email, phone, password });
+
+            const salt = await bcrypt.genSalt(10);
+            user.password = await bcrypt.hash(password, salt);
+
             await user.save();
             res.status(200).json(user);
         }
@@ -219,7 +253,7 @@ app.post("/api/ownerLogin", [
 
         jwt.sign(payload, process.env.TOKEN_KEY, { expiresIn: 36000 }, (err, token) => {
             if (err) throw err;
-            res.status(200).json({ token })
+            res.status(200).json({ user })
         })
 
     } catch (err) {
