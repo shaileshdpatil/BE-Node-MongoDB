@@ -27,6 +27,7 @@ const subcategory = require("./model/subcategory");
 const city = require("./model/city");
 const state = require("./model/state");
 const admin = require("./model/adminData");
+const inqueryProp = require("./model/inquiery");
 
 //port address setup
 const port = process.env.PORT || 3000;
@@ -96,9 +97,12 @@ app.post("/api/AdminLogin", async (req, res) => {
         res.status(500).send("server error");
     }
 });
+
+
 //login a user
 app.post("/api/userLogin", async (req, res) => {
     const { email, password } = req.body;
+    
     try {
         let userLogin = await User.findOne({ email });
         if (!userLogin) {
@@ -115,21 +119,17 @@ app.post("/api/userLogin", async (req, res) => {
                 id: userLogin.id
             }
         }
-        const data ={
-            data:{
-                email:userLogin.email
-            }
-        }
-        jwt.sign(payload, process.env.TOKEN_KEY, { expiresIn: 36000 }, (err, token) => {
-            if (err) throw err;
-            res.status(200).json({ data })
-        })
 
+        jwt.sign(payload, process.env.TOKEN_KEY, { expiresIn: 36000 }, (err, token) => {
+            if (err) throw err; 
+            res.status(200).json({ token,payload });
+        })
     } catch (err) {
         console.error(err.message);
         res.status(500).send("server error");
     }
 });
+
 
 
 //register a user
@@ -156,7 +156,7 @@ app.post("/api/user-reg", async (req, res) => {
 
 //register a owner 
 app.post("/api/ownerRegister", async (req, res) => {
-    const { names, email, phone, password,tokens } = req.body;
+    const { names, email, phone, password } = req.body;
     try {
         let owner = await Owner.findOne({ email });
         if (owner) {
@@ -204,7 +204,7 @@ app.get("/api/categoryDisplay", async (req, res) => {
     } catch {
         res.status("400").json(categorysfind);
     }
-})
+})  
 
 //delete category
 app.delete("/api/deleteOcategory/:id", async function (req, res) {
@@ -262,24 +262,21 @@ app.post("/api/ownerLogin", [
     }
 });
 
-//insert property
-app.post("/api/insertproperty", async (req, res) => {
-    const { name, type, amount } = req.body;
+//insert a property
+app.post("/api/insertpropertyData/Patil", async (req, res) => {
+    const { PropertyName,FullAddress, description, Price,No_of_Floors,No_of_Rooms,No_of_BeedRoom,No_of_Garage,No_of_Bathroom,No_of_Living_Room,City } = req.body;
+    // console.log(userId);
     try {
-        const property = new Allproperty({
-            name,
-            type,
-            amount
+        const AddProperty = new Allproperty({
+            PropertyName,FullAddress, description, Price,No_of_Floors,No_of_Rooms,No_of_BeedRoom,No_of_Garage,No_of_Bathroom,No_of_Living_Room,City,saveData
         });
-        await property.save();
-        res.status(200).send("successfully inserted");
+        await AddProperty.save();
+        res.status(200).send(AddProperty);
     } catch (err) {
         console.error(err.message);
         res.status(500).send("server error");
     }
 });
-
-
 
 
 //all state display
@@ -755,6 +752,31 @@ app.delete("/api/deleteOwner/:id", async function (req, res) {
         res.send("successfully deleted");
     } catch {
         res.status("400").json(deletepackage);
+    }
+})
+
+//inquery property
+app.post("/api/inqueryProperty",async(req,res)=>{
+    const {userId,amount,message} = req.body;
+    try{
+        const insertData = new inqueryProp({
+            userId,amount,message
+        })
+        await insertData.save();
+        res.status(200).json("successfully inserted");
+    }catch{
+        res.status(400).json("server error");
+    }
+})
+
+//find by id for property
+app.get("/api/propertyShow",async(req,res)=>{
+    const findPropertyByUser = new inqueryProp.findBy({userID});
+    try{
+        if(!findPropertyByUser) throw Error("something wrong");
+        res.status(200).json(findPropertyByUser);
+    }catch{
+        res.status(400).json("server error");
     }
 })
 

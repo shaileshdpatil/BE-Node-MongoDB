@@ -1,29 +1,68 @@
 const mongoose = require("mongoose");
 
 const allpropertysSchema = new mongoose.Schema({
-    name:{
-        type:String,
-        required:true
+    userID:{
+        
     },
-    type:{
-        type:String,
+    PropertyName: {
+        type: String,
+        minlenght: 4,
+        maxlenght: 20
     },
-    amount:{
-        type:Number,
+    FullAddress: {
+        type: String,
+        minlenght: 4,
+        maxlenght: 50
     },
-    added_date:{
-        type:Date,
-        default:Date.now
+    description: {
+        type: String,
+        minlenght: 4,
+        maxlenght: 20
     },
-    status:{
-        type:String,
-        enum:['active','notActive'],
-        default:"active"
+    Price: {
+        type: Number,
+        maxlenght: 20
+
     },
+    No_of_Floors: {
+        type: Number,
+        maxlenght: 20
+
+    },
+    No_of_Rooms: {
+        type: Number,
+        maxlenght: 20
+
+    },
+    No_of_BeedRoom: {
+        type: Number,
+        maxlenght: 20
+
+    },
+    No_of_Garage: {
+        type: Number,
+        maxlenght: 20
+
+    },
+    No_of_Bathroom: {
+        type: Number,
+        maxlenght: 20
+
+    },
+    No_of_Living_Room: {
+        type: Number,
+        maxlenght: 20
+
+    },
+    City: {
+        type: String,
+        minlenght: 4,
+        maxlenght: 20
+    }
 })
 
 
-const Allproperty = new mongoose.model("allproperty",allpropertysSchema);
+const Allproperty = new mongoose.model("allpropertyData ", allpropertysSchema);
 module.exports = Allproperty;
 
 
