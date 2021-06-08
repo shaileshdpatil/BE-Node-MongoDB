@@ -1,7 +1,10 @@
 const mongoose = require("mongoose");
 
 const inquierySchema = new mongoose.Schema({
-    userId:{
+    userName:{
+        type:String
+    },
+    userEmail:{
         type:String
     },
     amount:{
@@ -12,6 +15,10 @@ const inquierySchema = new mongoose.Schema({
     },
     message:{
         type:String
+    },
+    Added_date:{
+        type:Date,
+        default:Date.now
     }
 })
 

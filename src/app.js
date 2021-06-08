@@ -116,7 +116,8 @@ app.post("/api/userLogin", async (req, res) => {
 
         const payload = {
             userLogin: {
-                id: userLogin.id
+                Fname:userLogin.Fname,
+                email: userLogin.email
             }
         }
 
@@ -220,14 +221,7 @@ app.delete("/api/deleteOcategory/:id", async function (req, res) {
 })
 
 //login a owner 
-app.post("/api/ownerLogin", [
-    check('email', 'email is required').not().isEmpty(),
-    check('password', 'password is required').isLength({ min: 5 })
-], async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
+app.post("/api/ownerLogin", async (req, res) => {
     const { email, password } = req.body;
     try {
         let owner = await Owner.findOne({ email });
@@ -246,14 +240,13 @@ app.post("/api/ownerLogin", [
             }
         }
 
-        const user = {
-            status: owner.status,
-            email: owner.email
+        const data = {
+            status: owner.status
         }
 
-        jwt.sign(payload, process.env.TOKEN_KEY, { expiresIn: 36000 }, (err, token) => {
+        jwt.sign(payload, process.env.TOKEN_KEY, { expiresIn: 360000 }, (err, token) => {
             if (err) throw err;
-            res.status(200).json({ user })
+            res.status(200).json({ data,token })
         })
 
     } catch (err) {
@@ -449,16 +442,7 @@ app.post("/api/subcategoryadd", async (req, res) => {
     }
 })
 
-//display package
-app.get("/api/packageDisplay", async (req, res) => {
-    const pack = await package.find();
-    try {
-        if (!pack) throw Error("something wrong")
-        res.status("200").json(pack);
-    } catch {
-        res.status("400").json(pack);
-    }
-})
+
 
 
 //delete package
@@ -496,6 +480,17 @@ app.get("/api/propertyDisplay", async (req, res) => {
         res.status("200").json(property);
     } catch {
         res.status("400").json(property);
+    }
+})
+
+//display package
+app.get("/api/packageDisplay", async (req, res) => {
+    const pack = await package.find();
+    try {
+        if (!pack) throw Error("something wrong")
+        res.status("200").json(pack);
+    } catch {
+        res.status("400").json(pack);
     }
 })
 
@@ -630,7 +625,7 @@ app.put("/api/updateCategory/:id/details", async function (req, res) {
         category.findByIdAndUpdate({ _id: id }, { name})
         .exec((err, result) => {
             if (err) return console.log(err)
-            res.json("successfully updated")
+            res.json("successfully updated");
         }) 
     } catch (err) {
         console.log(err)
@@ -757,10 +752,10 @@ app.delete("/api/deleteOwner/:id", async function (req, res) {
 
 //inquery property
 app.post("/api/inqueryProperty",async(req,res)=>{
-    const {userId,amount,message} = req.body;
+    const {userEmail,userName,amount,message,phone} = req.body;
     try{
         const insertData = new inqueryProp({
-            userId,amount,message
+            userEmail,userName,amount,message,phone
         })
         await insertData.save();
         res.status(200).json("successfully inserted");
@@ -769,9 +764,20 @@ app.post("/api/inqueryProperty",async(req,res)=>{
     }
 })
 
+//total inquiery will display
+app.get("/api/inquiryDisplay", async (req, res) => {
+    const dealInquery = await inqueryProp.find();
+    try {
+        if (!dealInquery) throw Error("something wrong")
+        res.status("200").json(dealInquery);
+    } catch {
+        res.status("400").json(dealInquery);
+    }
+})
+
 //find by id for property
 app.get("/api/propertyShow",async(req,res)=>{
-    const findPropertyByUser = new inqueryProp.findBy({userID});
+    const findPropertyByUser = new inqueryProp.findById({userID});
     try{
         if(!findPropertyByUser) throw Error("something wrong");
         res.status(200).json(findPropertyByUser);

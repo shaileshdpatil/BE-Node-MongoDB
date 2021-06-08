@@ -36,14 +36,6 @@ const ownerRegisterSchema = new mongoose.Schema({
         type:Boolean,
         default:false
     },
-    tokens:[
-        {
-            token:{
-                type:String,
-                required:true
-            }
-        }
-    ]
 })
 
 

@@ -1,9 +1,6 @@
 const mongoose = require("mongoose");
 
 const allpropertysSchema = new mongoose.Schema({
-    userID:{
-        
-    },
     PropertyName: {
         type: String,
         minlenght: 4,

@@ -21,13 +21,6 @@ const user_registerSchema = new mongoose.Schema({
         type:Date,
         default:Date.now
     },
-    tokens:[
-        {
-            tokens:{
-                type:String,
-            }
-        }
-    ]
 })
 const user_register = new mongoose.model("user_register",user_registerSchema);
 module.exports = user_register;
