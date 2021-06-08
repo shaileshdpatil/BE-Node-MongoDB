@@ -258,10 +258,9 @@ app.post("/api/ownerLogin", async (req, res) => {
 //insert a property
 app.post("/api/insertpropertyData/Patil", async (req, res) => {
     const { PropertyName,FullAddress, description, Price,No_of_Floors,No_of_Rooms,No_of_BeedRoom,No_of_Garage,No_of_Bathroom,No_of_Living_Room,City } = req.body;
-    // console.log(userId);
     try {
         const AddProperty = new Allproperty({
-            PropertyName,FullAddress, description, Price,No_of_Floors,No_of_Rooms,No_of_BeedRoom,No_of_Garage,No_of_Bathroom,No_of_Living_Room,City,saveData
+            PropertyName,FullAddress, description, Price,No_of_Floors,No_of_Rooms,No_of_BeedRoom,No_of_Garage,No_of_Bathroom,No_of_Living_Room,City
         });
         await AddProperty.save();
         res.status(200).send(AddProperty);
