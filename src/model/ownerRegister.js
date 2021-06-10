@@ -1,43 +1,43 @@
 const mongoose = require("mongoose");
 const ownerRegisterSchema = new mongoose.Schema({
-    packageId:{
-        type:String
+    packageName: {
+        type: String
     },
-    names:{
-        type:String,
-        required:true
+    names: {
+        type: String,
+        required: true
     },
-    email:{
-        type:String,
-        trim:true,
-        unique:true,
-        lowercase:true,
-        required:true
+    email: {
+        type: String,
+        trim: true,
+        unique: true,
+        lowercase: true,
+        required: true
     },
-    phone:{
-        type:Number,
-        unique:true
+    phone: {
+        type: Number,
+        unique: true
     },
-    gender:{
-        type:String,
-        enum:['male','female'],
+    gender: {
+        type: String,
+        enum: ['male', 'female'],
     },
-    password:{
-        type:String,
-        trim:true,
-        minlength:2,
-        maxlenght:10
+    password: {
+        type: String,
+        trim: true,
+        minlength: 2,
+        maxlenght: 10
     },
-    added_date:{
-        type:Date,
-        default:Date.now
+    added_date: {
+        type: Date,
+        default: Date.now
     },
-    status:{
-        type:Boolean,
-        default:false
+    status: {
+        type: Boolean,
+        default: false
     },
 })
 
 
-const ownerRegister = new mongoose.model("ownerRegister",ownerRegisterSchema);
+const ownerRegister = new mongoose.model("ownerRegister", ownerRegisterSchema);
 module.exports = ownerRegister;

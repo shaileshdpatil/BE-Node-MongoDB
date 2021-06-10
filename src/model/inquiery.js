@@ -1,6 +1,9 @@
 const mongoose = require("mongoose");
 
 const inquierySchema = new mongoose.Schema({
+    ownerID:{
+        type:String
+    },
     userName:{
         type:String
     },

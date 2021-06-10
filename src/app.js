@@ -34,6 +34,32 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
+//all propertys display by owner
+app.get("/api/propertyDisplayForOwner/:ownerID", async (req, res) => {
+    
+    const ownerID = req.params.ownerID;
+    const propertyDispby = await Allproperty.find({ownerID : ownerID});
+    try {
+        if (!propertyDispby) throw Error("something wrong")
+        res.status("200").json(propertyDispby);
+    } catch {
+        res.status("400").json(propertyDispby);
+    }
+})
+
+//// inqueryProp//all propertys display by owner
+app.get("/api/propertyinqueryForOwner/:ownerID", async (req, res) => {
+    
+    const ownerID = req.params.ownerID;
+    const findinquery = await inqueryProp.find({ownerID:ownerID})
+    try {
+        res.status("200").json(findowner);
+        if (!findinquery) throw Error("something wrong")
+    } catch {
+        res.status("400").json(findinquery);
+    }
+})
+
 //register a admin 
 app.post("/api/adminRegister", async (req, res) => {
     const { email, password } = req.body;
@@ -97,7 +123,6 @@ app.post("/api/AdminLogin", async (req, res) => {
         res.status(500).send("server error");
     }
 });
-
 
 //login a user
 app.post("/api/userLogin", async (req, res) => {
@@ -179,11 +204,11 @@ app.post("/api/ownerRegister", async (req, res) => {
                 id: ownerData.id
             }
         }
-        // const user = {
-        //     ownerDate:{
-        //         names: ownerData.names
-        //     }
-        // }
+        const user = {
+            ownerDate:{
+                names: ownerData.names
+            }
+        }
 
         jwt.sign(payload, process.env.TOKEN_KEY, { expiresIn: 36000 }, (err, token) => {
             if (err) throw err;
@@ -241,7 +266,9 @@ app.post("/api/ownerLogin", async (req, res) => {
         }
 
         const data = {
-            status: owner.status
+            id: owner.id,
+            status: owner.status,
+            name:owner.names
         }
 
         jwt.sign(payload, process.env.TOKEN_KEY, { expiresIn: 360000 }, (err, token) => {
@@ -257,10 +284,11 @@ app.post("/api/ownerLogin", async (req, res) => {
 
 //insert a property
 app.post("/api/insertpropertyData/Patil", async (req, res) => {
-    const { PropertyName,FullAddress, description, Price,No_of_Floors,No_of_Rooms,No_of_BeedRoom,No_of_Garage,No_of_Bathroom,No_of_Living_Room,City } = req.body;
+    // const ownerID = req.params.id;
+    const { PropertyName,FullAddress, description, Price,No_of_Floors,No_of_Rooms,No_of_BeedRoom,No_of_Garage,No_of_Bathroom,No_of_Living_Room,City,ownerID  } = req.body;
     try {
         const AddProperty = new Allproperty({
-            PropertyName,FullAddress, description, Price,No_of_Floors,No_of_Rooms,No_of_BeedRoom,No_of_Garage,No_of_Bathroom,No_of_Living_Room,City
+            PropertyName,ownerID,FullAddress, description, Price,No_of_Floors,No_of_Rooms,No_of_BeedRoom,No_of_Garage,No_of_Bathroom,No_of_Living_Room,City
         });
         await AddProperty.save();
         res.status(200).send(AddProperty);
@@ -269,6 +297,18 @@ app.post("/api/insertpropertyData/Patil", async (req, res) => {
         res.status(500).send("server error");
     }
 });
+
+//all propertys display
+app.get("/api/propertyDisplay", async (req, res) => {
+    const property = await Allproperty.find();
+    try {
+        if (!property) throw Error("something wrong")
+        res.status("200").json(property);
+    } catch {
+        res.status("400").json(property);
+    }
+})
+
 
 
 //all state display
@@ -471,17 +511,6 @@ app.get("/api/ownerDisplay", async (req, res) => {
 })
 
 
-//all propertys display
-app.get("/api/propertyDisplay", async (req, res) => {
-    const property = await Allproperty.find();
-    try {
-        if (!property) throw Error("something wrong")
-        res.status("200").json(property);
-    } catch {
-        res.status("400").json(property);
-    }
-})
-
 //display package
 app.get("/api/packageDisplay", async (req, res) => {
     const pack = await package.find();
@@ -581,6 +610,23 @@ app.put("/api/updateOwner/:id/status", async function (req, res) {
         res.json({
             err: 'Invalid owner'
         })
+    }
+})
+
+
+
+
+
+//ropertys single show display
+app.get("/api/propertyDisplayForSingle/:_id", async (req, res) => {
+    
+    const _id = req.params._id;
+    const propertyDispbybySingle = await Allproperty.findOne({_id:_id});
+    try {
+        if (!propertyDispbybySingle) throw Error("something wrong")
+        res.status("200").json(propertyDispbybySingle);
+    } catch {
+        res.status("400").json(propertyDispbybySingle);
     }
 })
 
@@ -751,10 +797,10 @@ app.delete("/api/deleteOwner/:id", async function (req, res) {
 
 //inquery property
 app.post("/api/inqueryProperty",async(req,res)=>{
-    const {userEmail,userName,amount,message,phone} = req.body;
+    const {userEmail,userName,amount,message,phone,ownerID} = req.body;
     try{
         const insertData = new inqueryProp({
-            userEmail,userName,amount,message,phone
+            userEmail,userName,amount,message,phone,ownerID
         })
         await insertData.save();
         res.status(200).json("successfully inserted");

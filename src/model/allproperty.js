@@ -1,6 +1,12 @@
 const mongoose = require("mongoose");
 
 const allpropertysSchema = new mongoose.Schema({
+    ownerID:{
+        type:String
+    },
+    OwnerName: {
+        type: String,
+    },
     PropertyName: {
         type: String,
     },
@@ -30,6 +36,9 @@ const allpropertysSchema = new mongoose.Schema({
     },
     No_of_Living_Room: {
         type: Number,
+    },
+    sqrft:{
+        type:String
     },
     City: {
         type: String,
