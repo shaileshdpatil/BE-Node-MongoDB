@@ -1,12 +1,19 @@
 require('dotenv').config()
-const cloudinary = require("cloudinary");
+
 const express = require("express");
 const cors = require('cors');
 const { check, validationResult } = require("express-validator")
 
+const cloudinary = require("cloudinary");
+//config 
+cloudinary.config({
+    cloud_name: 'drz6zowp9',
+    api_key: '877383498391837',
+    api_secret: 'Rzg8Av03rVOYdzq4k287GUF7Ws8'
+});
 
-//auth
-const auth = require("./Auth/middleware");
+// //auth
+// const auth = require("./Auth/middleware");
 
 const app = express();
 app.use(cors());
@@ -34,16 +41,7 @@ var bodyParser = require('body-parser');
 //port address setup
 const port = process.env.PORT || 3000;
 
-app.use(express.json(bodyParser.json({ limit: "50mb" })));
-
-//config 
-
-cloudinary.config({
-    cloud_name: 'drz6zowp9',
-    api_key: '877383498391837',
-    api_secret: 'Rzg8Av03rVOYdzq4k287GUF7Ws8'
-});
-
+app.use(express.json());
 
 
 
@@ -56,32 +54,16 @@ app.post("/api/uploadFile", async (req, res) => {
         public_id: result.public_id,
         url: result.secure_url
     })
-
 })
-
-// app.post("/api/insertproperty", async (req, res) => {
-//     const { PropertyName, Images, FullAddress, description, Price, No_of_Floors, No_of_Rooms, No_of_BeedRoom, No_of_Garage, No_of_Bathroom, No_of_Living_Room, sqrft, location, kitchen } = req.body;
-//     // console.log(Images)
-//     try {
-//         const property = new Allproperty({
-//             PropertyName, FullAddress, description, Price, No_of_Floors, No_of_Rooms, No_of_BeedRoom, No_of_Garage, No_of_Bathroom, No_of_Living_Room, sqrft, Images, location, kitchen,
-//         });
-//         await property.save();
-//         res.status(200).send("successfully inserted");
-//     } catch (err) {
-//         console.error(err.message);
-//         res.status(500).send("server error");
-//     }
-// });
 
     // insert a property
     app.post("/api/insertpropertyData/Patil", async (req, res) => {
         // const ownerID = req.params.id;
-        const { PropertyName,FullAddress, Images,description, Price,No_of_Floors,No_of_Rooms,No_of_BeedRoom,No_of_Garage,No_of_Bathroom,No_of_Living_Room,City,ownerID  } = req.body;
+        const { PropertyName,FullAddress,Images,description, Price,No_of_Floors,No_of_Rooms,No_of_BeedRoom,No_of_Garage,No_of_Bathroom,No_of_Living_Room,City,ownerID  } = req.body;
         console.log(Images)
         try {
             const AddProperty = new Allproperty({
-                PropertyName,ownerID,FullAddress,Images, description, Price,No_of_Floors,No_of_Rooms,No_of_BeedRoom,No_of_Garage,No_of_Bathroom,No_of_Living_Room,City
+                PropertyName,FullAddress,Images,description,Price,No_of_Floors,No_of_Rooms,No_of_BeedRoom,No_of_Garage,No_of_Bathroom,No_of_Living_Room,City,ownerID
             });
             await AddProperty.save();
             res.status(200).send(AddProperty);
