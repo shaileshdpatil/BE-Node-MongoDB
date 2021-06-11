@@ -1,11 +1,14 @@
 const mongoose = require("mongoose");
 
 const allpropertysSchema = new mongoose.Schema({
-    ownerID:{
-        type:String
+    ownerID: {
+        type: String
     },
     OwnerName: {
         type: String,
+    },
+    Images: {
+        type: Object,
     },
     PropertyName: {
         type: String,
@@ -27,7 +30,7 @@ const allpropertysSchema = new mongoose.Schema({
     },
     No_of_BeedRoom: {
         type: Number,
-      },
+    },
     No_of_Garage: {
         type: Number,
     },
@@ -37,8 +40,8 @@ const allpropertysSchema = new mongoose.Schema({
     No_of_Living_Room: {
         type: Number,
     },
-    sqrft:{
-        type:String
+    sqrft: {
+        type: String
     },
     City: {
         type: String,

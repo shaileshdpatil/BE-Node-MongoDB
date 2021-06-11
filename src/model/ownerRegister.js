@@ -18,15 +18,8 @@ const ownerRegisterSchema = new mongoose.Schema({
         type: Number,
         unique: true
     },
-    gender: {
-        type: String,
-        enum: ['male', 'female'],
-    },
     password: {
         type: String,
-        trim: true,
-        minlength: 2,
-        maxlenght: 10
     },
     added_date: {
         type: Date,
