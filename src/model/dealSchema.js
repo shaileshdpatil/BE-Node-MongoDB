@@ -1,24 +1,25 @@
 const mongoose = require("mongoose");
 
 const dealSchema = new mongoose.Schema({
-    OwnerName:{
+    userEmail:{
         type:String,
-        required:true,
-        unique:true,
     },
-    customerName:{
+    ownerID:{
         type:String,
-        required:true,
-        unique:true,
+    },
+    ownerName:{
+        type:String
     },
     amount:{
         type:Number,
         required:true
     },
-    phone:{
-        type:Number,
-        match: /^(\()?\d{3}(\))?(-|\s)?\d{3}(-|\s)\d{4}$/,
-        required:true
+    propertyId:{
+        type:String,
+    },
+    deal:{
+        type:String,
+        default:'comleted'
     },
     added_date:{
         type:Date,
@@ -27,5 +28,5 @@ const dealSchema = new mongoose.Schema({
 
 })
 
-const dealschema = new mongoose.model("feedbackSchema",dealSchema);
-module.exports = dealschema;
+const shailuKiDeal = new mongoose.model("shailuIsLoveDeal",dealSchema);
+module.exports = shailuKiDeal;

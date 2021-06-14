@@ -4,14 +4,6 @@ const express = require("express");
 const cors = require('cors');
 const { check, validationResult } = require("express-validator")
 
-const cloudinary = require("cloudinary");
-//config 
-cloudinary.config({
-    cloud_name: 'drz6zowp9',
-    api_key: '877383498391837',
-    api_secret: 'Rzg8Av03rVOYdzq4k287GUF7Ws8'
-});
-
 // //auth
 // const auth = require("./Auth/middleware");
 
@@ -26,7 +18,7 @@ require("../db");
 const User = require("./model/user_register");
 const Owner = require("./model/ownerRegister");
 const feedback = require("./model/feedbackSchema");
-const deal = require("./model/dealSchema");
+const shailuKiDeal = require("./model/dealSchema");
 const Allproperty = require("./model/allproperty")
 const package = require("./model/packages");
 const category = require("./model/category");
@@ -36,13 +28,142 @@ const state = require("./model/state");
 const admin = require("./model/adminData");
 const inqueryProp = require("./model/inquiery");
 const reviewData = require("./model/reviewSchema");
-var bodyParser = require('body-parser');
-
+const inqueryResponse = require('./model/inqueryResponse');
 //port address setup
 const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
+const cloudinary = require("cloudinary");
+
+
+
+//all deal display
+app.get("/api/dealdisplayall/patil", async (req, res) => {
+    const propertyDeal = await shailuKiDeal.find();
+    try {
+        if (!propertyDeal) throw Error("something wrong")
+        res.status("200").json(propertyDeal);
+    } catch {
+        res.status("400").json(propertyDeal);
+    }
+})
+
+// property data update 
+app.put("/api/updatepropertyp/:id/details", async function (req, res) {
+    try {
+        const id = req.params.id
+        const PropertyName = req.body.PropertyName
+        const FullAddress = req.body.FullAddress
+        const description = req.body.description
+        const Price = req.body.Price
+        const No_of_Floors = req.body.No_of_Floors
+        const No_of_Rooms = req.body.No_of_Rooms
+        const No_of_BeedRoom = req.body.No_of_BeedRoom 
+        const No_of_Garage = req.body.No_of_Garage
+        const No_of_Bathroom = req.body.No_of_Bathroom
+        const No_of_Living_Room = req.body.No_of_Living_Room
+        const City = req.body.City
+        const builtyear = req.body.builtyear
+        const category = req.body.category
+        const kitchen = req.body.kitchen
+        const sqrft = req.body.sqrft
+        const location = req.body.location
+    
+        
+
+        Allproperty.findByIdAndUpdate({ _id: id }, {kitchen,sqrft,location,PropertyName,FullAddress,description,Price,No_of_Floors,No_of_Rooms,No_of_BeedRoom,No_of_Garage,No_of_Bathroom,No_of_Living_Room,City,builtyear,category})
+            .exec((err, result) => {
+                if (err) return console.log(err)
+                res.json("successfully updated");
+            })
+    } catch (err) {
+        console.log(err)
+        res.json({
+            err: 'failed to update'
+        })
+    }
+})
+
+
+//deal completed
+app.put("/api/dealActivate/:id/isActivated", async function (req, res) {
+    try {
+        const id = req.params.id
+        inqueryResponse.findByIdAndUpdate({ _id: id }, { isCompleted: true })
+            .exec((err, result) => {
+                if (err) return console.log(err)
+                res.json("successfully activated")
+            })
+    } catch (err) {
+        console.log(err)
+        res.json({
+            err: 'Invalid owner'
+        })
+    }
+})
+
+//deal completed
+app.put("/api/dealActivated/:id/isCompleted", async function (req, res) {
+    try {
+        const id = req.params.id
+        inqueryProp.findByIdAndUpdate({ _id: id }, { isCompleted: true })
+            .exec((err, result) => {
+                if (err) return console.log(err)
+                res.json("successfully activated")
+            })
+    } catch (err) {
+        console.log(err)
+        res.json({
+            err: 'Invalid owner'
+        })
+    }
+})
+
+
+
+//deal completed
+app.post("/api/insertDealWithLove/Shailu", async (req, res) => {
+    const { ownerName, userEmail,amount,propertyId,ownerID } = req.body;
+    try {
+        const shailuLove = new shailuKiDeal({
+            ownerID,
+            ownerName, 
+            userEmail,
+            amount,
+            propertyId
+        });
+        // console.log(ownerName);
+        await shailuLove.save();
+        res.status(200).send(shailuLove);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("server error");
+    }
+});
+
+
+
+// inquery property
+app.post("/api/insertResponse", async (req, res) => {
+    const { userEmail, message, ownerID,ownerName,amount ,propertyId } = req.body;
+    try {
+        const insertResponse = new inqueryResponse({
+            userEmail, message, ownerID,ownerName,amount,propertyId
+        })
+        await insertResponse.save();
+        res.status(200).json("successfully inserted");
+    } catch {
+        res.status(400).json("server error");
+    }
+})
+
+//config 
+cloudinary.config({
+    cloud_name: 'ddd37gooh',
+    api_key: '412574992491613',
+    api_secret: 'Yt-M7Ci-gwQ61h8RL2RICxUNZ6A'
+});
 
 
 app.post("/api/uploadFile", async (req, res) => {
@@ -56,31 +177,46 @@ app.post("/api/uploadFile", async (req, res) => {
     })
 })
 
-    // insert a property
-    app.post("/api/insertpropertyData/Patil", async (req, res) => {
-        // const ownerID = req.params.id;
-        const { PropertyName,FullAddress,Images,description, Price,No_of_Floors,No_of_Rooms,No_of_BeedRoom,No_of_Garage,No_of_Bathroom,No_of_Living_Room,City,ownerID  } = req.body;
-        console.log(Images)
-        try {
-            const AddProperty = new Allproperty({
-                PropertyName,FullAddress,Images,description,Price,No_of_Floors,No_of_Rooms,No_of_BeedRoom,No_of_Garage,No_of_Bathroom,No_of_Living_Room,City,ownerID
-            });
-            await AddProperty.save();
-            res.status(200).send(AddProperty);
-        } catch (err) {
-            console.error(err.message);
-            res.status(500).send("server error");
-        }
-    });
+// insert a property
+app.post("/api/insertpropertyData/Patil", async (req, res) => {
+    // const ownerID = req.params.id;
+    const { OwnerName, PropertyName, FullAddress, Images, description, Price, No_of_Floors, No_of_Rooms, No_of_BeedRoom, No_of_Garage, No_of_Bathroom, No_of_Living_Room, City, ownerID,builtyear } = req.body;
+    try {
+        const AddProperty = new Allproperty({
+            OwnerName, PropertyName, FullAddress, Images, description, Price, No_of_Floors, No_of_Rooms, No_of_BeedRoom, No_of_Garage, No_of_Bathroom, No_of_Living_Room, City, ownerID,builtyear
+        });
+        // console.log(Images)/
+        await AddProperty.save();
+        res.status(200).send(AddProperty);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("server error");
+    }
+});
+
+//display owner theri review
+app.get('/api/ownerDisplayReview/:ownerID', async (req, res) => {
+    const ownerID = req.params.ownerID
+    const searchWho = await reviewData.find({ ownerID: ownerID });
+    try {
+        if (!searchWho) throw Error("something wrong")
+        res.status(200).json(searchWho);
+    } catch {
+        console.error(searchWho);
+        res.status(500).json(searchWho);
+    }
+})
+
 
 ///command add
 app.post("/api/commentadd", async (req, res) => {
-    const { comment, id, userName } = req.body;
+    const { comment, ownerID, userName,propertyId } = req.body;
     try {
         const commentadd = new reviewData({
             comment,
-            propertyId: id,
-            userName
+            ownerID: ownerID,
+            userName,
+            propertyId
         });
         await commentadd.save();
         res.status(200).send("successfully inserted");
@@ -89,6 +225,35 @@ app.post("/api/commentadd", async (req, res) => {
         res.status(500).send("server error");
     }
 });
+
+//delete property
+app.delete("/api/deleteproperty/:id", async function (req, res) {
+    const id = req.params.id
+    const deleteproperty = await Allproperty.findByIdAndDelete({ _id: id });
+    try {
+        if (!deleteproperty) {
+            res.status("400").json(deleteproperty);
+        }
+        res.send(deleteproperty);
+    } catch {
+        res.status("400").json(deleteproperty);
+    }
+})
+
+
+//delete review
+app.delete("/api/deletereview/:id", async function (req, res) {
+    const id = req.params.id
+    const deletereview = await reviewData.findByIdAndDelete({ _id: id });
+    try {
+        if (!deletereview) {
+            res.status("400").json(deletereview);
+        }
+        res.send(deletereview);
+    } catch {
+        res.status("400").json(deletereview);
+    }
+})
 
 //all propertys display
 app.get("/api/propertyDisplay", async (req, res) => {
@@ -100,6 +265,10 @@ app.get("/api/propertyDisplay", async (req, res) => {
         res.status("400").json(property);
     }
 })
+
+
+
+
 
 //all propertys display by owner
 app.get("/api/propertyDisplayForOwner/:ownerID", async (req, res) => {
@@ -113,6 +282,35 @@ app.get("/api/propertyDisplayForOwner/:ownerID", async (req, res) => {
         res.status("400").json(propertyDispby);
     }
 })
+//all deals display by owner
+app.get("/api/dealDisplayForOwner/:ownerID", async (req, res) => {
+
+    const ownerID = req.params.ownerID;
+    const dealDisplayowner = await shailuKiDeal.find({ ownerID: ownerID });
+    try {
+        if (!dealDisplayowner) throw Error("something wrong")
+        res.status("200").json(dealDisplayowner);
+    } catch {
+        res.status("400").json(dealDisplayowner);
+    }   
+})
+
+//display user their response
+app.get('/api/searchuserEmail/:userEmail', async (req, res) => {
+    const userEmail = req.params.userEmail
+    const searchuserEmail = await inqueryResponse.find({ userEmail: userEmail });
+    try {
+        if (!searchuserEmail) throw Error("something wrong")
+        res.status(200).json(searchuserEmail);
+    } catch {
+        // console.error(searchuserEmail);
+        res.status(500).json(searchuserEmail);
+    }
+})
+
+
+
+
 
 //display property by id
 app.get("/api/reviewByItId/:id", async (req, res) => {
@@ -130,12 +328,12 @@ app.get("/api/reviewByItId/:id", async (req, res) => {
 app.get("/api/propertyinqueryForOwner/:ownerID", async (req, res) => {
 
     const ownerID = req.params.ownerID;
-    const findinquery = await inqueryProp.find({ ownerID: ownerID })
+    const findinqueryD = await inqueryProp.find({ ownerID: ownerID })
     try {
-        res.status("200").json(findinquery);
-        if (!findinquery) throw Error("something wrong")
+        res.status("200").json(findinqueryD);
+        if (!findinqueryD) throw Error("something wrong")
     } catch {
-        res.status("400").json(findinquery);
+        res.status("400").json(findinqueryD);
     }
 })
 
@@ -240,6 +438,24 @@ app.post("/api/userLogin", async (req, res) => {
     }
 });
 
+//update password owner
+app.put("/api/updatepOwner/:ownerID/details", async function (req, res) {
+    try {
+        const ownerID = req.params.ownerID
+        const password = req.body.password
+
+        Owner.findByIdAndUpdate({ _id: ownerID }, { password:password })
+            .exec((err, result) => {
+                if (err) return console.log(err)
+                res.json("successfully updated")
+            })
+    } catch (err) {
+        console.log(err)
+        res.json({
+            err: 'failed to update'
+        })
+    }
+})
 
 
 //register a user
@@ -248,7 +464,7 @@ app.post("/api/user-reg", async (req, res) => {
     try {
         userExist = await User.findOne({ email });
         if (userExist) {
-            return res.status(422).json({ error: "already exist" });
+            return res.status(422).json({ error: "Email is already exist" });
         } else {
             const user = new User({ Fname, Lname, email, phone, password });
 
@@ -278,9 +494,6 @@ app.post("/api/ownerRegister", async (req, res) => {
             password,
             phone,
         });
-
-        const salt = await bcrypt.genSalt(10);
-        ownerData.password = await bcrypt.hash(password, salt);
         await ownerData.save();
 
         const payload = {
@@ -289,14 +502,12 @@ app.post("/api/ownerRegister", async (req, res) => {
             }
         }
         const user = {
-            ownerDate: {
-                names: ownerData.names
-            }
+            id: ownerData._id
         }
 
         jwt.sign(payload, process.env.TOKEN_KEY, { expiresIn: 36000 }, (err, token) => {
             if (err) throw err;
-            res.status(200).json({ token })
+            res.status(200).json({ token, user })
         })
 
     } catch (err) {
@@ -336,13 +547,12 @@ app.post("/api/ownerLogin", async (req, res) => {
         let owner = await Owner.findOne({ email });
         if (!owner) {
             return res.status(422).json({ error: "envalid data" })
+        } else {
+            const checkpass = await Owner.findOne({ password });
+            if (!checkpass) {
+                return res.status(422).json({ error: "envalid password" })
+            }
         }
-
-        const checkpass = await bcrypt.compare(password, owner.password);
-        if (!checkpass) {
-            return res.status(422).json({ error: "envalid data" })
-        }
-
         const payload = {
             owner: {
                 id: owner.id
@@ -365,8 +575,6 @@ app.post("/api/ownerLogin", async (req, res) => {
         res.status(500).send("server error");
     }
 });
-
-
 
 
 
@@ -393,6 +601,8 @@ app.delete("/api/deletestate/:id", async function (req, res) {
         res.status("400").json(deletestate);
     }
 })
+
+
 
 //insert city
 app.post("/api/cityadd", async (req, res) => {
@@ -671,6 +881,23 @@ app.put("/api/updateOwner/:id/status", async function (req, res) {
         })
     }
 })
+//owner activate
+app.put("/api/updateOwnerDetails/:id", async function (req, res) {
+    const { transactionID, packageName, email, amount } = req.body;
+    try {
+        const id = req.params.id
+        Owner.findByIdAndUpdate({ _id: id }, { transactionID, packageName, email, amount })
+            .exec((err, result) => {
+                if (err) return console.log(err)
+                res.json("successfully activated")
+            })
+    } catch (err) {
+        console.log(err)
+        res.json({
+            err: 'Invalid owner'
+        })
+    }
+})
 
 
 
@@ -832,6 +1059,7 @@ app.put("/api/deactivateOwner/:id/status", async function (req, res) {
 })
 
 
+
 //all propertys display by owner
 app.get("/api/propertyDisplayOwner/:ownerID", async (req, res) => {
 
@@ -883,10 +1111,10 @@ app.delete("/api/deleteOwner/:id", async function (req, res) {
 
 //inquery property
 app.post("/api/inqueryProperty", async (req, res) => {
-    const { userEmail, userName, amount, message, phone, ownerID } = req.body;
+    const { userEmail, userName, amount, message, phone, ownerID,propertyId } = req.body;
     try {
         const insertData = new inqueryProp({
-            userEmail, userName, amount, message, phone, ownerID
+            userEmail, userName, amount, message, phone, ownerID,propertyId
         })
         await insertData.save();
         res.status(200).json("successfully inserted");
@@ -894,6 +1122,10 @@ app.post("/api/inqueryProperty", async (req, res) => {
         res.status(400).json("server error");
     }
 })
+
+
+
+
 
 //total inquiery will display
 app.get("/api/inquiryDisplay", async (req, res) => {

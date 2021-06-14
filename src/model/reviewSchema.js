@@ -2,6 +2,9 @@ const mongoose = require("mongoose");
 
 const commentSchema = new mongoose.Schema({
     propertyId:{
+        type:String,
+    },
+    ownerID:{
         type:String
     },
     userName:{

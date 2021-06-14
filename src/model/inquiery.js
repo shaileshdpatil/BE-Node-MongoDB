@@ -1,6 +1,9 @@
 const mongoose = require("mongoose");
 
 const inquierySchema = new mongoose.Schema({
+    propertyId:{
+        type:String
+    },
     ownerID:{
         type:String
     },
@@ -22,6 +25,10 @@ const inquierySchema = new mongoose.Schema({
     Added_date:{
         type:Date,
         default:Date.now
+    },
+    isCompleted:{
+        type:Boolean,
+        default:false
     }
 })
 

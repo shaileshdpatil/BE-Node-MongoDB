@@ -1,7 +1,13 @@
 const mongoose = require("mongoose");
 const ownerRegisterSchema = new mongoose.Schema({
     packageName: {
-        type: String
+        type:String,
+    },
+    transactionID:{
+        type:String,
+    },
+    amount:{
+      type:Number,  
     },
     names: {
         type: String,

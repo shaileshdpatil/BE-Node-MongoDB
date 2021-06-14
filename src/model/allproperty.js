@@ -4,11 +4,8 @@ const allpropertysSchema = new mongoose.Schema({
     ownerID: {
         type: String
     },
-    OwnerName: {
-        type: String,
-    },
-    Images: {
-        type: Object,
+    OwnerName:{
+        type:String,
     },
     PropertyName: {
         type: String,
@@ -46,6 +43,16 @@ const allpropertysSchema = new mongoose.Schema({
     City: {
         type: String,
     },
+    Images: {
+        type: Object,
+    },
+    builtyear:{
+        type:Number
+    },
+    isCompleted:{
+        type:Boolean,
+        default:false
+    }
 })
 
 
