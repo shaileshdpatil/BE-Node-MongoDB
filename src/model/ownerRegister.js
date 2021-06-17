@@ -20,6 +20,9 @@ const ownerRegisterSchema = new mongoose.Schema({
         lowercase: true,
         required: true
     },
+    no_of_ads:{
+        type:String,
+    },
     phone: {
         type: Number,
         unique: true

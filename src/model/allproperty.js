@@ -17,7 +17,7 @@ const allpropertysSchema = new mongoose.Schema({
         type: String,
     },
     Price: {
-        type: Number,
+        type: String,
     },
     No_of_Floors: {
         type: Number,
@@ -48,6 +48,9 @@ const allpropertysSchema = new mongoose.Schema({
     },
     builtyear:{
         type:Number
+    },
+    category:{
+        type:String
     },
     isCompleted:{
         type:Boolean,

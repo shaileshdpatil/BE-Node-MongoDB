@@ -1,21 +1,17 @@
 const mongoose = require("mongoose");
 
 const subcategorySchema = new mongoose.Schema({
-    names:{
+    namesData:{
         type:String,
     },
-    category:{
+    categoryData:{
         type:String,
+        index: false
     },
     added_date:{
         type:Date,
         default:Date.now
-    },
-    status:{
-        type:String,
-        enum:['active','notActive'],
-        default:"active"
-    },
+    }
 })
 
 

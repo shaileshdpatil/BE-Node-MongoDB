@@ -7,6 +7,9 @@ const inquieryRespSchema = new mongoose.Schema({
     propertyId:{
         type:String
     },
+    inqueryID:{
+        type:String,
+    },  
     ownerName:{
         type:String
     },  

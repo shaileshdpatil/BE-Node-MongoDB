@@ -38,6 +38,20 @@ const cloudinary = require("cloudinary");
 
 
 
+
+//display user their deals
+app.get('/api/searchuserDeals/:userEmail', async (req, res) => {
+    const userEmail = req.params.userEmail
+    const searchuserdeal = await shailuKiDeal.find({ userEmail: userEmail });
+    try {
+        if (!searchuserdeal) throw Error("something wrong")
+        res.status(200).json(searchuserdeal);
+    } catch {
+        // console.error(searchuserdeal);
+        res.status(500).json(searchuserdeal);
+    }
+})
+
 //all deal display
 app.get("/api/dealdisplayall/patil", async (req, res) => {
     const propertyDeal = await shailuKiDeal.find();
@@ -46,6 +60,19 @@ app.get("/api/dealdisplayall/patil", async (req, res) => {
         res.status("200").json(propertyDeal);
     } catch {
         res.status("400").json(propertyDeal);
+    }
+})
+
+//all propertys deal by owner
+app.get("/api/dealDisplayForOwner/:ownerID", async (req, res) => {
+
+    const ownerID = req.params.ownerID;
+    const findinqueryDisplay = await shailuKiDeal.find({ ownerID: ownerID })
+    try {
+        res.status("200").json(findinqueryDisplay);
+        if (!findinqueryDisplay) throw Error("something wrong")
+    } catch {
+        res.status("400").json(findinqueryDisplay);
     }
 })
 
@@ -59,7 +86,7 @@ app.put("/api/updatepropertyp/:id/details", async function (req, res) {
         const Price = req.body.Price
         const No_of_Floors = req.body.No_of_Floors
         const No_of_Rooms = req.body.No_of_Rooms
-        const No_of_BeedRoom = req.body.No_of_BeedRoom 
+        const No_of_BeedRoom = req.body.No_of_BeedRoom
         const No_of_Garage = req.body.No_of_Garage
         const No_of_Bathroom = req.body.No_of_Bathroom
         const No_of_Living_Room = req.body.No_of_Living_Room
@@ -69,10 +96,11 @@ app.put("/api/updatepropertyp/:id/details", async function (req, res) {
         const kitchen = req.body.kitchen
         const sqrft = req.body.sqrft
         const location = req.body.location
-    
-        
+        const Images = req.body.Images
 
-        Allproperty.findByIdAndUpdate({ _id: id }, {kitchen,sqrft,location,PropertyName,FullAddress,description,Price,No_of_Floors,No_of_Rooms,No_of_BeedRoom,No_of_Garage,No_of_Bathroom,No_of_Living_Room,City,builtyear,category})
+
+
+        Allproperty.findByIdAndUpdate({ _id: id }, { Images, kitchen, sqrft, location, PropertyName, FullAddress, description, Price, No_of_Floors, No_of_Rooms, No_of_BeedRoom, No_of_Garage, No_of_Bathroom, No_of_Living_Room, City, builtyear, category })
             .exec((err, result) => {
                 if (err) return console.log(err)
                 res.json("successfully updated");
@@ -124,11 +152,11 @@ app.put("/api/dealActivated/:id/isCompleted", async function (req, res) {
 
 //deal completed
 app.post("/api/insertDealWithLove/Shailu", async (req, res) => {
-    const { ownerName, userEmail,amount,propertyId,ownerID } = req.body;
+    const { ownerName, userEmail, amount, propertyId, ownerID } = req.body;
     try {
         const shailuLove = new shailuKiDeal({
             ownerID,
-            ownerName, 
+            ownerName,
             userEmail,
             amount,
             propertyId
@@ -146,10 +174,10 @@ app.post("/api/insertDealWithLove/Shailu", async (req, res) => {
 
 // inquery property
 app.post("/api/insertResponse", async (req, res) => {
-    const { userEmail, message, ownerID,ownerName,amount ,propertyId } = req.body;
+    const { userEmail, message, ownerID, ownerName, amount, propertyId, inqueryID } = req.body;
     try {
         const insertResponse = new inqueryResponse({
-            userEmail, message, ownerID,ownerName,amount,propertyId
+            userEmail, message, ownerID, ownerName, amount, propertyId, inqueryID
         })
         await insertResponse.save();
         res.status(200).json("successfully inserted");
@@ -180,10 +208,10 @@ app.post("/api/uploadFile", async (req, res) => {
 // insert a property
 app.post("/api/insertpropertyData/Patil", async (req, res) => {
     // const ownerID = req.params.id;
-    const { OwnerName, PropertyName, FullAddress, Images, description, Price, No_of_Floors, No_of_Rooms, No_of_BeedRoom, No_of_Garage, No_of_Bathroom, No_of_Living_Room, City, ownerID,builtyear } = req.body;
+    const { OwnerName, PropertyName, FullAddress, Images, description, Price, No_of_Floors, No_of_Rooms, No_of_BeedRoom, No_of_Garage, No_of_Bathroom, No_of_Living_Room, City, ownerID, builtyear, sqrft, category } = req.body;
     try {
         const AddProperty = new Allproperty({
-            OwnerName, PropertyName, FullAddress, Images, description, Price, No_of_Floors, No_of_Rooms, No_of_BeedRoom, No_of_Garage, No_of_Bathroom, No_of_Living_Room, City, ownerID,builtyear
+            OwnerName, PropertyName, FullAddress, Images, description, Price, No_of_Floors, No_of_Rooms, No_of_BeedRoom, No_of_Garage, No_of_Bathroom, No_of_Living_Room, City, ownerID, builtyear, sqrft, category
         });
         // console.log(Images)/
         await AddProperty.save();
@@ -210,7 +238,7 @@ app.get('/api/ownerDisplayReview/:ownerID', async (req, res) => {
 
 ///command add
 app.post("/api/commentadd", async (req, res) => {
-    const { comment, ownerID, userName,propertyId } = req.body;
+    const { comment, ownerID, userName, propertyId } = req.body;
     try {
         const commentadd = new reviewData({
             comment,
@@ -282,17 +310,31 @@ app.get("/api/propertyDisplayForOwner/:ownerID", async (req, res) => {
         res.status("400").json(propertyDispby);
     }
 })
-//all deals display by owner
-app.get("/api/dealDisplayForOwner/:ownerID", async (req, res) => {
+
+//all propertys display by owner
+app.get("/api/propertyDisplayForOwner/:ownerID", async (req, res) => {
 
     const ownerID = req.params.ownerID;
-    const dealDisplayowner = await shailuKiDeal.find({ ownerID: ownerID });
+    const propertyDispby = await Allproperty.find({ ownerID: ownerID });
     try {
-        if (!dealDisplayowner) throw Error("something wrong")
-        res.status("200").json(dealDisplayowner);
+        if (!propertyDispby) throw Error("something wrong")
+        res.status("200").json(propertyDispby);
     } catch {
-        res.status("400").json(dealDisplayowner);
-    }   
+        res.status("400").json(propertyDispby);
+    }
+})
+
+//all deals display by owner
+app.get("/api/ownerFind/:ownerID", async (req, res) => {
+
+    const id = req.params.ownerID;
+    const ownerFind = await Owner.find({ _id: id });
+    try {
+        if (!ownerFind) throw Error("something wrong")
+        res.status("200").json(ownerFind);
+    } catch {
+        res.status("400").json(ownerFind);
+    }
 })
 
 //display user their response
@@ -444,7 +486,7 @@ app.put("/api/updatepOwner/:ownerID/details", async function (req, res) {
         const ownerID = req.params.ownerID
         const password = req.body.password
 
-        Owner.findByIdAndUpdate({ _id: ownerID }, { password:password })
+        Owner.findByIdAndUpdate({ _id: ownerID }, { password: password })
             .exec((err, result) => {
                 if (err) return console.log(err)
                 res.json("successfully updated")
@@ -725,33 +767,16 @@ app.post("/api/packageadd", async (req, res) => {
 //insert subcategory
 app.post("/api/subcategoryadd", async (req, res) => {
     const { names, category } = req.body;
+    const subcategoryadd = new subcategory({
+        names, category
+    });
     try {
-        const subcategoryadd = new subcategory({
-            names, category
-        });
-        const body = {
-            success: true,
-            message: 'successfully inserted',
-            error: ''
-        }
         await subcategoryadd.save();
-        res.status(200).send(body);
-    } catch (err) {
-        console.error(err.message);
-        if (err.code == 11000) {
-            const body = {
-                success: false,
-                error: `Duplicate data ${err.keyValue.names}`
-            }
-            res.status(400).send(body)
-        } else {
-            res.status(500).send("server error");
-        }
+        res.status(200).send(subcategoryadd);
+    } catch  {
+        res.status(400).send(subcategoryadd)
     }
 })
-
-
-
 
 //delete package
 app.delete("/api/deletePackage/:_id", async function (req, res) {
@@ -883,10 +908,10 @@ app.put("/api/updateOwner/:id/status", async function (req, res) {
 })
 //owner activate
 app.put("/api/updateOwnerDetails/:id", async function (req, res) {
-    const { transactionID, packageName, email, amount } = req.body;
+    const { transactionID, packageName, amount, no_of_ads } = req.body;
     try {
         const id = req.params.id
-        Owner.findByIdAndUpdate({ _id: id }, { transactionID, packageName, email, amount })
+        Owner.findByIdAndUpdate({ _id: id }, { transactionID, packageName, amount, no_of_ads })
             .exec((err, result) => {
                 if (err) return console.log(err)
                 res.json("successfully activated")
@@ -898,10 +923,6 @@ app.put("/api/updateOwnerDetails/:id", async function (req, res) {
         })
     }
 })
-
-
-
-
 
 //ropertys single show display
 app.get("/api/propertyDisplayForSingle/:_id", async (req, res) => {
@@ -1111,10 +1132,10 @@ app.delete("/api/deleteOwner/:id", async function (req, res) {
 
 //inquery property
 app.post("/api/inqueryProperty", async (req, res) => {
-    const { userEmail, userName, amount, message, phone, ownerID,propertyId } = req.body;
+    const { userEmail, userName, amount, message, phone, ownerID, propertyId } = req.body;
     try {
         const insertData = new inqueryProp({
-            userEmail, userName, amount, message, phone, ownerID,propertyId
+            userEmail, userName, amount, message, phone, ownerID, propertyId
         })
         await insertData.save();
         res.status(200).json("successfully inserted");
