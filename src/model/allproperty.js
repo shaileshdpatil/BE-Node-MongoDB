@@ -16,6 +16,9 @@ const allpropertysSchema = new mongoose.Schema({
     description: {
         type: String,
     },
+    location:{
+        type:String,
+    },
     Price: {
         type: String,
     },

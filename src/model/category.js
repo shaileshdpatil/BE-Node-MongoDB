@@ -4,16 +4,12 @@ const categorySchema = new mongoose.Schema({
     name:{
         type:String,
         required:true,
+        uppercase: true
     },
     added_date:{
         type:Date,
         default:Date.now
-    },
-    status:{
-        type:String,
-        enum:['active','notActive'],
-        default:"active"
-    },
+    }
 })
 
 

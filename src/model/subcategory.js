@@ -1,13 +1,13 @@
 const mongoose = require("mongoose");
 
 const subcategorySchema = new mongoose.Schema({
-    namesData:{
+    names:{
         type:String,
     },
-    categoryData:{
-        type:String,
-        index: false
-    },
+    // category    :{
+    //     type:String,
+    //     uppercase: true,
+    // },
     added_date:{
         type:Date,
         default:Date.now

@@ -3,11 +3,12 @@ const mongoose = require("mongoose");
 const stateSchema = new mongoose.Schema({
     country:{
         type:String,
-        required:true,
+        default:"india"
     },
     states:{
         type:String,
-        required:true,
+        unique:true,
+        index:true
     },
     added_date:{
         type:Date,

@@ -30,7 +30,7 @@ const ownerRegisterSchema = new mongoose.Schema({
     password: {
         type: String,
     },
-    added_date: {
+    PaymetDate: {
         type: Date,
         default: Date.now
     },

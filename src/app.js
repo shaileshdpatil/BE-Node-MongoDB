@@ -11,6 +11,7 @@ const app = express();
 app.use(cors());
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+
 //connextion
 require("../db");
 
@@ -38,6 +39,21 @@ const cloudinary = require("cloudinary");
 
 
 
+
+
+
+//display user their deals
+app.get('/api/searchbycategory/:category', async (req, res) => {
+    const category = req.params.category
+    const searchbycategory = await Allproperty.find({ category: category });
+    try {
+        if (!searchbycategory) throw Error("something wrong")
+        res.status(200).json(searchbycategory);
+    } catch {
+        // console.error(searchbycategory);
+        res.status(500).json(searchbycategory);
+    }
+})
 
 //display user their deals
 app.get('/api/searchuserDeals/:userEmail', async (req, res) => {
@@ -98,8 +114,6 @@ app.put("/api/updatepropertyp/:id/details", async function (req, res) {
         const location = req.body.location
         const Images = req.body.Images
 
-
-
         Allproperty.findByIdAndUpdate({ _id: id }, { Images, kitchen, sqrft, location, PropertyName, FullAddress, description, Price, No_of_Floors, No_of_Rooms, No_of_BeedRoom, No_of_Garage, No_of_Bathroom, No_of_Living_Room, City, builtyear, category })
             .exec((err, result) => {
                 if (err) return console.log(err)
@@ -112,6 +126,25 @@ app.put("/api/updatepropertyp/:id/details", async function (req, res) {
         })
     }
 })
+
+//update package 
+app.put("/api/updatePackage/:id/details", async function (req, res) {
+    try {
+        const id = req.params.id
+        const name = req.body.name
+        const duration = req.body.duration
+        const no_of_ads = req.body.no_of_ads
+        const amount = req.body.amount
+        const description = req.body.description
+
+        package.findByIdAndUpdate({ _id: id }, { name, duration, no_of_ads, amount, description })
+        res.status(200).send("successfully upadated");
+    } catch (err) {
+    
+            res.status(500).send("server error")
+    }
+})
+
 
 
 //deal completed
@@ -208,10 +241,10 @@ app.post("/api/uploadFile", async (req, res) => {
 // insert a property
 app.post("/api/insertpropertyData/Patil", async (req, res) => {
     // const ownerID = req.params.id;
-    const { OwnerName, PropertyName, FullAddress, Images, description, Price, No_of_Floors, No_of_Rooms, No_of_BeedRoom, No_of_Garage, No_of_Bathroom, No_of_Living_Room, City, ownerID, builtyear, sqrft, category } = req.body;
+    const { OwnerName, PropertyName, FullAddress, Images, description, Price, No_of_Floors, No_of_Rooms, No_of_BeedRoom, No_of_Garage, No_of_Bathroom, No_of_Living_Room, City, ownerID, builtyear, sqrft, category,location } = req.body;
     try {
         const AddProperty = new Allproperty({
-            OwnerName, PropertyName, FullAddress, Images, description, Price, No_of_Floors, No_of_Rooms, No_of_BeedRoom, No_of_Garage, No_of_Bathroom, No_of_Living_Room, City, ownerID, builtyear, sqrft, category
+            OwnerName, PropertyName, FullAddress, Images, description, Price, No_of_Floors, No_of_Rooms, No_of_BeedRoom, No_of_Garage, No_of_Bathroom, No_of_Living_Room, City, ownerID, builtyear, sqrft, category,location    
         });
         // console.log(Images)/
         await AddProperty.save();
@@ -558,6 +591,47 @@ app.post("/api/ownerRegister", async (req, res) => {
     }
 });
 
+//insert property
+app.post("/api/insertcategory", async (req, res) => {
+    const { name } = req.body;
+    try {
+        const categorys = await category.findOne({ name });
+        if (categorys) {
+            return res.status(422).json({ error: "category is already exist" })
+        } else {
+            const categoryAdd = new category({
+                name
+            })
+            await categoryAdd.save();
+            res.status(200).send('successfully inserted');
+        }
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("server error");
+    }
+});
+
+//insert subcategory
+app.post("/api/subcategoryadd", async (req, res) => {
+    const { names } = req.body;
+    try {
+        const subcategorys = await subcategory.findOne({ names });
+        if (subcategorys) {
+            return res.status(422).json({ error: "sub category is already exist" })
+        } else {
+            const subcategoryadd = new subcategory({
+                names
+            });
+            await subcategoryadd.save();
+            res.status(200).send("successfully inserted");
+        }
+    } catch(err) {
+        console.error(err.message);
+        res.status(500).send("server error");
+    }
+})
+
+
 //display
 app.get("/api/categoryDisplay", async (req, res) => {
     const categorysfind = await category.find();
@@ -646,20 +720,7 @@ app.delete("/api/deletestate/:id", async function (req, res) {
 
 
 
-//insert city
-app.post("/api/cityadd", async (req, res) => {
-    const { states, citys } = req.body;
-    try {
-        const cityadd = new city({
-            states, citys
-        });
-        await cityadd.save();
-        res.status("200").send("successfully inserted");
-    } catch (err) {
-        console.error(err.message);
-        res.status("500").send("server error");
-    }
-});
+
 
 //delete city
 app.delete("/api/deletecityy/:id", async function (req, res) {
@@ -685,45 +746,35 @@ app.get("/api/citydisp", async (req, res) => {
     }
 })
 
-//insert property
-app.post("/api/insertcategory", async (req, res) => {
-    const { name } = req.body;
+
+
+//insert city
+app.post("/api/cityadd", async (req, res) => {
+    const { citys } = req.body;
     try {
-        const categorys = new category({
-            name,
+        const cityadd = new city({
+            citys
         });
-        await categorys.save();
+
+        await cityadd.save();
+
         const body = {
             success: true,
             message: 'successfully inserted',
             error: ''
         }
-        res.status(200).send(body);
+        res.status("200").send(body);
     } catch (err) {
-        console.error(err.code);
+        console.error(err.message);
         if (err.code == 11000) {
             const body = {
                 success: false,
-                error: `Duplicate data ${err.keyValue.name}`
+                error: `Duplicate data ${err.keyValue.states}`
             }
             res.status(400).send(body)
         } else {
             res.status(500).send("server error");
         }
-    }
-});
-
-//insert state
-app.post("/api/stateadd", async (req, res) => {
-    const { country, states } = req.body;
-    try {
-        const stateadds = new state({
-            country, states
-        });
-        await stateadds.save();
-        res.status(200).send("successfully inserted");
-    } catch (err) {
-        res.status(500).send("server error");
     }
 });
 
@@ -764,19 +815,34 @@ app.post("/api/packageadd", async (req, res) => {
     }
 });
 
-//insert subcategory
-app.post("/api/subcategoryadd", async (req, res) => {
-    const { names, category } = req.body;
-    const subcategoryadd = new subcategory({
-        names, category
-    });
+//insert state
+app.post("/api/stateadd", async (req, res) => {
+    const { states } = req.body;
     try {
-        await subcategoryadd.save();
-        res.status(200).send(subcategoryadd);
-    } catch  {
-        res.status(400).send(subcategoryadd)
+        const stateadds = new state({
+            states
+        });
+        await stateadds.save();
+        const body = {
+            success: true,
+            message: 'successfully inserted',
+            error: ''
+        }
+        res.status(200).send(body);
+    } catch (err) {
+        console.error(err.code);
+        if (err.code == 11000) {
+            const body = {
+                success: false,
+                error: `Duplicate data ${err.keyValue.states}`
+            }
+            res.status(400).send(body)
+        } else {
+            res.status(500).send("server error");
+        }
     }
-})
+});
+
 
 //delete package
 app.delete("/api/deletePackage/:_id", async function (req, res) {
@@ -937,36 +1003,6 @@ app.get("/api/propertyDisplayForSingle/:_id", async (req, res) => {
     }
 })
 
-//update package 
-app.put("/api/updatePackage/:id/details", async function (req, res) {
-    try {
-        const id = req.params.id
-        const name = req.body.name
-        const duration = req.body.duration
-        const no_of_ads = req.body.no_of_ads
-        const amount = req.body.amount
-        const description = req.body.description
-
-        package.findByIdAndUpdate({ _id: id }, { name, duration, no_of_ads, amount, description })
-        const body = {
-            success: true,
-            message: 'successfully updated',
-            error: ''
-        }
-        res.status(200).send(body);
-    } catch (err) {
-        console.error(err.code);
-        if (err.code == 11000) {
-            const body = {
-                success: false,
-                error: `Duplicate data ${err.keyValue.name}`
-            }
-            res.status(400).send(body)
-        } else {
-            res.status(500).send("server error");
-        }
-    }
-})
 
 //update password owner
 app.put('/api/updatePasswordOwner/:id', async (req, res) => {
@@ -992,6 +1028,28 @@ app.put("/api/updateCategory/:id/details", async function (req, res) {
             .exec((err, result) => {
                 if (err) return console.log(err)
                 res.json("successfully updated");
+            })
+    } catch (err) {
+        console.log(err)
+        res.json({
+            err: 'failed to update'
+        })
+    }
+})
+
+app.put("/api/updatePackage/:id/details", async function (req, res) {
+    try {
+        const id = req.params.id
+        const name = req.body.name
+        const duration = req.body.duration
+        const no_of_ads = req.body.no_of_ads
+        const amount = req.body.amount
+        const description = req.body.description
+
+        package.findByIdAndUpdate({ _id: id }, { name, duration, no_of_ads, amount, description  })
+            .exec((err, result) => {
+                if (err) return console.log(err)
+                res.json("successfully updated")
             })
     } catch (err) {
         console.log(err)
@@ -1046,9 +1104,8 @@ app.put("/api/updateCity/:id/details", async function (req, res) {
     try {
         const id = req.params.id
         const citys = req.body.citys
-        const states = req.body.states
 
-        city.findByIdAndUpdate({ _id: id }, { states, citys })
+        city.findByIdAndUpdate({ _id: id }, { citys })
             .exec((err, result) => {
                 if (err) return console.log(err)
                 res.json("successfully updated")
